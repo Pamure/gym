@@ -131,7 +131,7 @@ class AppState extends ChangeNotifier {
   }
 
   bool get _hasLocalSession =>
-      _prefs.getString('if_user') != null && workouts.isNotEmpty;
+      _prefs.getString('if_user') != null && (_prefs.containsKey('if_user') || workouts.isNotEmpty);
 
   bool get loggedIn => status == AuthStatus.loggedIn;
 
