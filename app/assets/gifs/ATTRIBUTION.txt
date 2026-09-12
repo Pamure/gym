@@ -1,0 +1,5 @@
+Exercise demonstration GIFs bundled in IronForge are from the open
+hasaneyldrm/exercises-dataset (https://github.com/hasaneyldrm/exercises-dataset),
+licensed CC-BY-SA 3.0 / AGPL-3.0 (dataset). Attribution: exercise visual media
+from community open exercise datasets (hasaneyldrm/exercises-dataset).
+Personal use only — do not redistribute the media commercially.

@@ -1,0 +1,25 @@
+services:
+  ironforge:
+    build: .
+    container_name: ironforge
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    mem_limit: 512m
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    env_file: .env
+    environment:
+      - PORT=8420
+      - BIND=0.0.0.0
+      - DATA_DIR=/data
+    volumes:
+      - ironforge-data:/data
+    ports:
+      - "127.0.0.1:8420:8420"
+    restart: unless-stopped
+
+volumes:
+  ironforge-data:

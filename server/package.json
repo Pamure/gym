@@ -1,0 +1,22 @@
+{
+  "name": "ironforge-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IronForge personal gym tracker backend - single user, hardened",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "smoke": "bash test/smoke.sh"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/static": "^8.2.0",
+    "fastify": "^5.6.2",
+    "better-sqlite3": "^12.4.1",
+    "argon2": "^0.44.0",
+    "ajv": "^8.17.1"
+  }
+}
