@@ -85,6 +85,10 @@ class AppState extends ChangeNotifier {
   final List<Map<String, dynamic>> _pending = [];
   int pendingCount = 0;
   String? lastError;
+  // PUNISHMENT MECHANISM: if user misses 6-day workout target for a week, apply penalty
+  int missedWorkoutDays = 0;
+  bool get punishmentActive => missedWorkoutDays >= 2; // 2 misses = penalty
+  String get punishmentText => punishmentActive ? "PENALTY: Add +1 extra set to next workout. No excuses — 6-day commitment = results." : "On track. Keep the 6-day streak alive.";
   bool initialPullDone = false;
 
   late SharedPreferences _prefs;

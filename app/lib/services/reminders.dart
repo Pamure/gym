@@ -162,6 +162,14 @@ class ReminderService {
             hour: gym ~/ 60, minute: gym % 60,
             title: 'Time to train 💪',
             body: 'Open IronForge → your session is waiting. Film your last set.');
+      // Stricter 2nd reminder: morning prep reminder (2/day total, skip Sunday)
+      for (var d = DateTime.monday; d <= DateTime.saturday; d++) {
+        await scheduleWeekly(
+            id: idGymBase + d + 100, weekday: d,
+            hour: (gym ~/ 60 - 1 + 24) % 24, minute: gym % 60,
+            title: 'Prep time - do not skip',
+            body: 'Pack your bag, check your workout, and move. 6-day consistency = results. Skip Sunday - rest.');
+      }
       }
     }
     if (kegel != null) {
