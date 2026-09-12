@@ -104,8 +104,8 @@ class AppState extends ChangeNotifier {
       // No start date set anywhere → the 12-week clock begins TODAY (first login).
       // User can backdate it in Settings → Program start date to their real first gym day.
       if (startDate.isEmpty) {
-        final now = DateTime.now();
-        final iso = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        // User directive: 21 September 2026 (Monday) start date
+        final iso = '2026-09-21';
         await setPref('program_start_date', iso);
       }
       final settingsMap = me['settings'] as Map? ?? {};
