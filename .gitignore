@@ -1,0 +1,30 @@
+# Node
+node_modules/
+server/node_modules/
+
+# Dart / Flutter
+app/build/
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/android/.gradle/
+app/android/local.properties
+app/ios/Pods/
+app/ios/.symlinks/
+
+# Secrets
+.env
+.env.local
+server/.env
+__omp_shell(".env.example")
+
+# Python tooling
+.venv/
+__pycache__/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+.idea/
+*.swp
