@@ -46,7 +46,7 @@ The app's Learn tab renders this. Written for someone on day one.
 - **Core:** not just abs — the deep muscles wrapping your spine. Trained by planks/dead bugs AND
   by bracing in every compound lift.
 - **Anterior pelvic tilt:** pelvis tipped forward (arched lower back, belly out) — caused by tight
-  hip flexors + weak core. Your Thursday session specifically fixes this.
+  hip flexors + weak core. Optional recovery mobility and consistent full-body training may help, but no single session “fixes” posture.
 
 ## Technique terms
 - **Bracing:** tightening your midsection 360° (like bracing for a punch) to protect the spine under load.

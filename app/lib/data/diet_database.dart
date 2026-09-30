@@ -1,72 +1,435 @@
-FOOD_DB = [
-    {"name":"Chicken Breast","hindi":"मुर्गे का सीना","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":31,"carbs":0,"fat":3.6,"calories":165},"portion_grams":150,"price_inr":120,"unit_ref":"500g"},
-    {"name":"Chicken Leg","hindi":"मुर्गे का जांघ","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":26,"carbs":0,"fat":10,"calories":205},"portion_grams":200,"price_inr":100,"unit_ref":"500g"},
-    {"name":"Egg Whole (Boiled)","hindi":"अंडा","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":13,"carbs":1.1,"fat":11,"calories":155},"portion_grams":50,"price_inr":6,"unit_ref":"per egg"},
-    {"name":"Paneer","hindi":"पनीर","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":18,"carbs":3.4,"fat":20,"calories":265},"portion_grams":100,"price_inr":40,"unit_ref":"200g"},
-    {"name":"Milk (Full Cream)","hindi":"दूध","category":"dairy","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":3.3,"carbs":4.8,"fat":3.3,"calories":61},"portion_grams":240,"price_inr":15,"unit_ref":"per cup"},
-    {"name":"Milk (Toned)","hindi":"टोंड दूध","category":"dairy","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":3.2,"carbs":4.7,"fat":1.5,"calories":42},"portion_grams":240,"price_inr":12,"unit_ref":"per cup"},
-    {"name":"Curd / Dahi","hindi":"दही","category":"dairy","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":3.8,"carbs":4.7,"fat":3.3,"calories":61},"portion_grams":200,"price_inr":15,"unit_ref":"per cup"},
-    {"name":"Ghee","hindi":"घी","category":"fat","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":0,"carbs":0,"fat":99.5,"calories":900},"portion_grams":15,"price_inr":30,"unit_ref":"per tbsp"},
-    {"name":"Soybeans (Dry)","hindi":"सोयाबीन","category":"legume","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":36.5,"carbs":30,"fat":18,"calories":446},"portion_grams":50,"price_inr":10,"unit_ref":"200g"},
-    {"name":"Soy Chunks (Nutrela)","hindi":"सोया चंक्स","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":50,"carbs":30,"fat":1.5,"calories":345},"portion_grams":30,"price_inr":12,"unit_ref":"30g dry"},
-    {"name":"Mutton / Goat","hindi":"बकरे का मांस","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":27,"carbs":0,"fat":14,"calories":250},"portion_grams":150,"price_inr":500,"unit_ref":"per kg"},
-    {"name":"Beef (Red Meat)","hindi":"गाय का मांस","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":26,"carbs":0,"fat":15,"calories":250},"portion_grams":150,"price_inr":350,"unit_ref":"per kg"},
-    {"name":"Fish Rohu / Katla","hindi":"रोहू मछली","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":22,"carbs":0,"fat":4.5,"calories":130},"portion_grams":150,"price_inr":30,"unit_ref":"150g"},
-    {"name":"Fish Basa","hindi":"बासा मछली","category":"protein","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":20,"carbs":0,"fat":2,"calories":105},"portion_grams":150,"price_inr":45,"unit_ref":"150g"},
-    {"name":"Spinach (Palak)","hindi":"पालक","category":"vegetable","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":2.9,"carbs":3.6,"fat":0.4,"calories":23},"portion_grams":150,"price_inr":15,"unit_ref":"150g"},
-    {"name":"Peas (Green Matar)","hindi":"मटर","category":"vegetable","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":5.4,"carbs":14,"fat":0.4,"calories":81},"portion_grams":100,"price_inr":20,"unit_ref":"100g"},
-    {"name":"Masoor Dal (Red Lentil)","hindi":"मसूर दाल","category":"legume","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":9,"carbs":20,"fat":0.5,"calories":116},"portion_grams":200,"price_inr":24,"unit_ref":"cup cooked"},
-    {"name":"Moong Dal (Green Gram)","hindi":"मूंग दाल","category":"legume","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":7,"carbs":18,"fat":0.5,"calories":105},"portion_grams":200,"price_inr":20,"unit_ref":"cup cooked"},
-    {"name":"Arhar / Toor Dal","hindi":"अरहर दाल","category":"legume","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":7.6,"carbs":19,"fat":1.6,"calories":116},"portion_grams":200,"price_inr":22,"unit_ref":"cup cooked"},
-    {"name":"Chana (Chickpeas)","hindi":"चना","category":"legume","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":9,"carbs":27,"fat":2.6,"calories":164},"portion_grams":160,"price_inr":15,"unit_ref":"cup cooked"},
-    {"name":"Wheat Roti","hindi":"गेहूं की रोटी","category":"carb","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":9,"carbs":48,"fat":1.5,"calories":297},"portion_grams":30,"price_inr":2,"unit_ref":"per roti"},
-    {"name":"Rice (White, Cooked)","hindi":"चावल","category":"carb","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":2.7,"carbs":28,"fat":0.3,"calories":130},"portion_grams":150,"price_inr":6,"unit_ref":"per cup"},
-    {"name":"Oats (Rolled)","hindi":"ओट्स","category":"carb","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":13,"carbs":67,"fat":6.5,"calories":389},"portion_grams":40,"price_inr":7,"unit_ref":"per 40g"},
-    {"name":"Banana","hindi":"केला","category":"fruit","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":1.1,"carbs":23,"fat":0.3,"calories":89},"portion_grams":120,"price_inr":6,"unit_ref":"per banana"},
-    {"name":"Apple","hindi":"सेब","category":"fruit","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":0.3,"carbs":14,"fat":0.2,"calories":52},"portion_grams":180,"price_inr":15,"unit_ref":"per apple"},
-    {"name":"Rajma (Kidney Bean Curry)","hindi":"राजमा","category":"mixed","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":8.5,"carbs":22,"fat":1.5,"calories":127},"portion_grams":200,"price_inr":35,"unit_ref":"per cup"},
-    {"name":"Dal Tadka","hindi":"दाल तड़का","category":"mixed","image":"https://media.giphy.com/media/3o7TKq0vVq0h0aW3kc/giphy.gif","per_100g":{"protein":8,"carbs":18,"fat":4,"calories":140},"portion_grams":200,"price_inr":30,"unit_ref":"per cup"},
-]
+/// Small, transparent Indian-food reference for the offline nutrition screen.
+///
+/// Values are approximate per 100 g and prices are planning estimates, not
+/// medical or shopping advice. Brands, cooking method and Delhi prices vary.
+/// Keep the database honest and expand it only when a source and serving size
+/// are recorded. This file is Dart (not a Python data dump) so the app can
+/// compile even when the diet screen is not opened.
+library;
 
-def search_food(query, limit=20):
-    query_lower = query.lower()
-    results = []
-    for item in FOOD_DB:
-        score = 0
-        if query_lower in item["name"].lower(): score += 3
-        if query_lower in item.get("hindi", "").lower(): score += 2
-        if query_lower == item.get("category", "").lower(): score += 1
-        if score > 0: results.append((score, item))
-    results.sort(key=lambda x: -x[0])
-    return [r[1] for r in results[:limit]]
+class FoodItem {
+  final String name;
+  final String hindi;
+  final String category;
+  final double proteinPer100g;
+  final double carbsPer100g;
+  final double fatPer100g;
+  final double caloriesPer100g;
+  final int defaultPortionGrams;
+  final double estimatedPriceInr;
+  final String unitReference;
 
-def calculate_budget(daily_target_inr=200):
-    selections = [
-        ("Egg Whole (Boiled)", 100, 12, 13.0), ("Milk (Toned, 1 cup)", 240, 12, 7.7),
-        ("Chicken Breast (Boneless)", 150, 36, 46.5), ("Wheat Roti", 60, 4, 5.4),
-        ("Rice (White, Cooked)", 150, 6, 4.1), ("Spinach (Palak)", 150, 15, 4.4),
-        ("Soy Chunks (Nutrela, Dry)", 30, 12, 15.0), ("Curd / Dahi", 200, 15, 7.6),
-        ("Paneer", 100, 40, 18.0), ("Moong Dal (Green Gram, Cooked)", 200, 20, 14.0),
-    ]
-    total_cost = sum(s[2] for s in selections)
-    total_protein = sum(s[3] for s in selections)
-    result_items = []
-    for name, grams, cost, prot in selections:
-        result_items.append({"food_name": name, "portion_grams": grams, "cost_inr": cost, "protein_g": round(prot, 1), "image_search": name.lower().replace(" ", "_")})
-    # Budget adjustment: if over 200, trim paneer portion
-    running_cost = sum(r["cost_inr"] for r in result_items)
-    if running_cost > daily_target_inr:
-        for r in result_items:
-            if r["food_name"].startswith("Paneer"):
-                r["portion_grams"] = 50
-                r["cost_inr"] = 20
-                r["protein_g"] = 9.0
-    running_cost = sum(r["cost_inr"] for r in result_items)
-    running_protein = sum(r["protein_g"] for r in result_items)
-    return {
-        "budget_target_inr": daily_target_inr,
-        "total_used_inr": round(running_cost, 1),
-        "total_protein_g": round(running_protein, 1),
-        "items": result_items,
-        "note": "Prices approximate for Okhla Vihar / South Delhi market (2026 INR). Verify at purchase. Budget: 200 INR/day target."
-    }
+  const FoodItem({
+    required this.name,
+    required this.hindi,
+    required this.category,
+    required this.proteinPer100g,
+    required this.carbsPer100g,
+    required this.fatPer100g,
+    required this.caloriesPer100g,
+    required this.defaultPortionGrams,
+    required this.estimatedPriceInr,
+    required this.unitReference,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'hindi': hindi,
+    'category': category,
+    'per100g': {
+      'protein': proteinPer100g,
+      'carbs': carbsPer100g,
+      'fat': fatPer100g,
+      'calories': caloriesPer100g,
+    },
+    'portionGrams': defaultPortionGrams,
+    'estimatedPriceInr': estimatedPriceInr,
+    'unitReference': unitReference,
+  };
+}
+
+/// A deliberately modest offline catalog. The app should not present made-up
+/// prices as exact facts; these are labels to help a beginner compare foods.
+const foodDb = <FoodItem>[
+  FoodItem(
+    name: 'Egg, whole',
+    hindi: 'अंडा',
+    category: 'protein',
+    proteinPer100g: 13,
+    carbsPer100g: 1.1,
+    fatPer100g: 11,
+    caloriesPer100g: 155,
+    defaultPortionGrams: 50,
+    estimatedPriceInr: 6,
+    unitReference: '1 egg',
+  ),
+  FoodItem(
+    name: 'Chicken breast, cooked',
+    hindi: 'चिकन ब्रेस्ट',
+    category: 'protein',
+    proteinPer100g: 31,
+    carbsPer100g: 0,
+    fatPer100g: 3.6,
+    caloriesPer100g: 165,
+    defaultPortionGrams: 150,
+    estimatedPriceInr: 120,
+    unitReference: '150 g cooked',
+  ),
+  FoodItem(
+    name: 'Chicken leg, cooked',
+    hindi: 'चिकन लेग',
+    category: 'protein',
+    proteinPer100g: 26,
+    carbsPer100g: 0,
+    fatPer100g: 10,
+    caloriesPer100g: 205,
+    defaultPortionGrams: 200,
+    estimatedPriceInr: 100,
+    unitReference: '200 g cooked',
+  ),
+  FoodItem(
+    name: 'Rohu or katla fish',
+    hindi: 'रोहू / कतला',
+    category: 'protein',
+    proteinPer100g: 22,
+    carbsPer100g: 0,
+    fatPer100g: 4.5,
+    caloriesPer100g: 130,
+    defaultPortionGrams: 150,
+    estimatedPriceInr: 30,
+    unitReference: '150 g',
+  ),
+  FoodItem(
+    name: 'Paneer',
+    hindi: 'पनीर',
+    category: 'dairy',
+    proteinPer100g: 18,
+    carbsPer100g: 3.4,
+    fatPer100g: 20,
+    caloriesPer100g: 265,
+    defaultPortionGrams: 100,
+    estimatedPriceInr: 40,
+    unitReference: '100 g',
+  ),
+  FoodItem(
+    name: 'Milk, toned',
+    hindi: 'टोंड दूध',
+    category: 'dairy',
+    proteinPer100g: 3.2,
+    carbsPer100g: 4.7,
+    fatPer100g: 1.5,
+    caloriesPer100g: 42,
+    defaultPortionGrams: 240,
+    estimatedPriceInr: 12,
+    unitReference: '1 cup',
+  ),
+  FoodItem(
+    name: 'Curd / dahi',
+    hindi: 'दही',
+    category: 'dairy',
+    proteinPer100g: 3.8,
+    carbsPer100g: 4.7,
+    fatPer100g: 3.3,
+    caloriesPer100g: 61,
+    defaultPortionGrams: 200,
+    estimatedPriceInr: 15,
+    unitReference: '1 bowl',
+  ),
+  FoodItem(
+    name: 'Soy chunks, dry',
+    hindi: 'सोया चंक्स',
+    category: 'protein',
+    proteinPer100g: 50,
+    carbsPer100g: 30,
+    fatPer100g: 1.5,
+    caloriesPer100g: 345,
+    defaultPortionGrams: 30,
+    estimatedPriceInr: 12,
+    unitReference: '30 g dry',
+  ),
+  FoodItem(
+    name: 'Soybean, dry',
+    hindi: 'सोयाबीन',
+    category: 'legume',
+    proteinPer100g: 36.5,
+    carbsPer100g: 30,
+    fatPer100g: 18,
+    caloriesPer100g: 446,
+    defaultPortionGrams: 50,
+    estimatedPriceInr: 10,
+    unitReference: '50 g dry',
+  ),
+  FoodItem(
+    name: 'Masoor dal, cooked',
+    hindi: 'मसूर दाल',
+    category: 'legume',
+    proteinPer100g: 9,
+    carbsPer100g: 20,
+    fatPer100g: 0.5,
+    caloriesPer100g: 116,
+    defaultPortionGrams: 200,
+    estimatedPriceInr: 24,
+    unitReference: '1 cup cooked',
+  ),
+  FoodItem(
+    name: 'Moong dal, cooked',
+    hindi: 'मूंग दाल',
+    category: 'legume',
+    proteinPer100g: 7,
+    carbsPer100g: 18,
+    fatPer100g: 0.5,
+    caloriesPer100g: 105,
+    defaultPortionGrams: 200,
+    estimatedPriceInr: 20,
+    unitReference: '1 cup cooked',
+  ),
+  FoodItem(
+    name: 'Chana, cooked',
+    hindi: 'चना',
+    category: 'legume',
+    proteinPer100g: 9,
+    carbsPer100g: 27,
+    fatPer100g: 2.6,
+    caloriesPer100g: 164,
+    defaultPortionGrams: 160,
+    estimatedPriceInr: 15,
+    unitReference: '1 cup cooked',
+  ),
+  FoodItem(
+    name: 'Rajma, cooked',
+    hindi: 'राजमा',
+    category: 'legume',
+    proteinPer100g: 8.5,
+    carbsPer100g: 22,
+    fatPer100g: 1.5,
+    caloriesPer100g: 127,
+    defaultPortionGrams: 200,
+    estimatedPriceInr: 35,
+    unitReference: '1 cup cooked',
+  ),
+  FoodItem(
+    name: 'Wheat roti',
+    hindi: 'गेहूं की रोटी',
+    category: 'carb',
+    proteinPer100g: 9,
+    carbsPer100g: 48,
+    fatPer100g: 1.5,
+    caloriesPer100g: 297,
+    defaultPortionGrams: 30,
+    estimatedPriceInr: 2,
+    unitReference: '1 roti',
+  ),
+  FoodItem(
+    name: 'Rice, cooked',
+    hindi: 'चावल',
+    category: 'carb',
+    proteinPer100g: 2.7,
+    carbsPer100g: 28,
+    fatPer100g: 0.3,
+    caloriesPer100g: 130,
+    defaultPortionGrams: 150,
+    estimatedPriceInr: 6,
+    unitReference: '1 cup cooked',
+  ),
+  FoodItem(
+    name: 'Oats',
+    hindi: 'ओट्स',
+    category: 'carb',
+    proteinPer100g: 13,
+    carbsPer100g: 67,
+    fatPer100g: 6.5,
+    caloriesPer100g: 389,
+    defaultPortionGrams: 40,
+    estimatedPriceInr: 7,
+    unitReference: '40 g dry',
+  ),
+  FoodItem(
+    name: 'Potato, boiled',
+    hindi: 'आलू',
+    category: 'carb',
+    proteinPer100g: 1.9,
+    carbsPer100g: 17,
+    fatPer100g: 0.1,
+    caloriesPer100g: 87,
+    defaultPortionGrams: 150,
+    estimatedPriceInr: 5,
+    unitReference: '1 medium',
+  ),
+  FoodItem(
+    name: 'Banana',
+    hindi: 'केला',
+    category: 'fruit',
+    proteinPer100g: 1.1,
+    carbsPer100g: 23,
+    fatPer100g: 0.3,
+    caloriesPer100g: 89,
+    defaultPortionGrams: 120,
+    estimatedPriceInr: 6,
+    unitReference: '1 banana',
+  ),
+  FoodItem(
+    name: 'Apple',
+    hindi: 'सेब',
+    category: 'fruit',
+    proteinPer100g: 0.3,
+    carbsPer100g: 14,
+    fatPer100g: 0.2,
+    caloriesPer100g: 52,
+    defaultPortionGrams: 180,
+    estimatedPriceInr: 15,
+    unitReference: '1 apple',
+  ),
+  FoodItem(
+    name: 'Spinach / palak',
+    hindi: 'पालक',
+    category: 'vegetable',
+    proteinPer100g: 2.9,
+    carbsPer100g: 3.6,
+    fatPer100g: 0.4,
+    caloriesPer100g: 23,
+    defaultPortionGrams: 150,
+    estimatedPriceInr: 15,
+    unitReference: '150 g',
+  ),
+  FoodItem(
+    name: 'Peas / matar',
+    hindi: 'मटर',
+    category: 'vegetable',
+    proteinPer100g: 5.4,
+    carbsPer100g: 14,
+    fatPer100g: 0.4,
+    caloriesPer100g: 81,
+    defaultPortionGrams: 100,
+    estimatedPriceInr: 20,
+    unitReference: '100 g',
+  ),
+  FoodItem(
+    name: 'Peanuts',
+    hindi: 'मूंगफली',
+    category: 'fat',
+    proteinPer100g: 25.8,
+    carbsPer100g: 16.1,
+    fatPer100g: 49.2,
+    caloriesPer100g: 567,
+    defaultPortionGrams: 30,
+    estimatedPriceInr: 8,
+    unitReference: '30 g',
+  ),
+  FoodItem(
+    name: 'Almonds',
+    hindi: 'बादाम',
+    category: 'fat',
+    proteinPer100g: 21.2,
+    carbsPer100g: 21.7,
+    fatPer100g: 49.9,
+    caloriesPer100g: 579,
+    defaultPortionGrams: 20,
+    estimatedPriceInr: 18,
+    unitReference: 'about 15 almonds',
+  ),
+  FoodItem(
+    name: 'Mustard oil',
+    hindi: 'सरसों तेल',
+    category: 'fat',
+    proteinPer100g: 0,
+    carbsPer100g: 0,
+    fatPer100g: 100,
+    caloriesPer100g: 884,
+    defaultPortionGrams: 10,
+    estimatedPriceInr: 2,
+    unitReference: '2 tsp',
+  ),
+  FoodItem(
+    name: 'Tofu',
+    hindi: 'टोफू',
+    category: 'protein',
+    proteinPer100g: 8,
+    carbsPer100g: 2,
+    fatPer100g: 4.8,
+    caloriesPer100g: 76,
+    defaultPortionGrams: 150,
+    estimatedPriceInr: 45,
+    unitReference: '150 g',
+  ),
+  FoodItem(
+    name: 'Sattu',
+    hindi: 'सत्तू',
+    category: 'legume',
+    proteinPer100g: 20,
+    carbsPer100g: 58,
+    fatPer100g: 5,
+    caloriesPer100g: 350,
+    defaultPortionGrams: 50,
+    estimatedPriceInr: 8,
+    unitReference: '50 g dry',
+  ),
+  FoodItem(
+    name: 'Mixed vegetables, cooked',
+    hindi: 'सब्जियां',
+    category: 'vegetable',
+    proteinPer100g: 2,
+    carbsPer100g: 9,
+    fatPer100g: 2,
+    caloriesPer100g: 60,
+    defaultPortionGrams: 200,
+    estimatedPriceInr: 20,
+    unitReference: '1 bowl',
+  ),
+];
+
+List<FoodItem> searchFood(String query, {int limit = 20}) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return foodDb.take(limit).toList();
+  final scored = <({int score, FoodItem item})>[];
+  for (final item in foodDb) {
+    final name = item.name.toLowerCase();
+    final hindi = item.hindi.toLowerCase();
+    var score = 0;
+    if (name == q) score += 5;
+    if (name.contains(q)) score += 3;
+    if (hindi.contains(q)) score += 2;
+    if (item.category == q) score += 1;
+    if (score > 0) scored.add((score: score, item: item));
+  }
+  scored.sort((a, b) => b.score.compareTo(a.score));
+  return scored.take(limit).map((x) => x.item).toList();
+}
+
+class DietPlanItem {
+  final FoodItem food;
+  final int grams;
+  final double costInr;
+
+  const DietPlanItem(this.food, this.grams, this.costInr);
+
+  double get proteinGrams => food.proteinPer100g * grams / 100;
+  double get calories => food.caloriesPer100g * grams / 100;
+}
+
+class BudgetPlan {
+  final double targetInr;
+  final List<DietPlanItem> items;
+
+  const BudgetPlan(this.targetInr, this.items);
+
+  double get totalCostInr => items.fold(0, (sum, item) => sum + item.costInr);
+  double get totalProteinGrams =>
+      items.fold(0, (sum, item) => sum + item.proteinGrams);
+  bool get withinBudget => totalCostInr <= targetInr;
+}
+
+/// A conservative example, not a personalized calorie prescription.
+BudgetPlan calculateBudget({double dailyTargetInr = 200}) {
+  FoodItem byName(String name) => foodDb.firstWhere((x) => x.name == name);
+  return BudgetPlan(dailyTargetInr, [
+    DietPlanItem(byName('Egg, whole'), 150, 18),
+    DietPlanItem(byName('Milk, toned'), 240, 12),
+    DietPlanItem(byName('Chicken breast, cooked'), 100, 80),
+    DietPlanItem(byName('Soy chunks, dry'), 30, 12),
+    DietPlanItem(byName('Moong dal, cooked'), 200, 20),
+    DietPlanItem(byName('Wheat roti'), 120, 8),
+    DietPlanItem(byName('Rice, cooked'), 150, 6),
+    DietPlanItem(byName('Mixed vegetables, cooked'), 200, 20),
+    DietPlanItem(byName('Banana'), 120, 6),
+  ]);
+}

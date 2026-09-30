@@ -1,39 +1,27 @@
-# 08 — Progress Timeline: When You'll See What (Science-Based)
+# 08 — Progress and expectations
 
-## The honest timeline
+Progress is noisy. Early strength may improve quickly because the nervous system
+learns the movement, while visible muscle change generally takes longer. The
+rate depends on training history, sleep, food, genetics and starting point; the
+app never promises a deadline or a specific body transformation.
 
-| Period | Adaptation | What you notice |
-|---|---|---|
-| Weeks 1–4 | **Neurological** — brain learns to recruit muscle | Strength jumps fast, mirror shows ~nothing. **This is normal. Do not quit.** |
-| Weeks 5–8 | Neural + early muscle growth | Slight definition, clothes fit differently, posture visibly better, energy up, DOMS mostly gone |
-| Weeks 8–12 | **Structural growth (hypertrophy)** | First clearly visible muscle. ~0.5–1 kg lean muscle/month possible. 30–50% stronger on main lifts vs day 1 |
+## Track useful signals
 
-## Why strength comes before size
-Early gains are mostly your nervous system learning coordination and fiber recruitment —
-documented in the Journal of Physiology and beginner-training literature. Muscle tissue growth
-lags ~4–8 weeks behind. Everyone who quits in month 1 quits right before it starts working.
+- attendance at the three required strength sessions;
+- clean reps and load over several weeks;
+- energy, sleep and recovery;
+- body weight only if it is useful to your goal;
+- waist/other measurements or photos only if you choose and can do them without
+  distress.
 
-## Body recomposition (your situation)
-At 68 kg with love handles and no training history, you're in the one population that can build
-muscle AND lose fat simultaneously: the untrained beginner. Consequences:
-- **The scale will lie to you.** +1 kg muscle, −1 kg fat = scale unchanged, body transformed.
-- Track instead: waist measurement (weekly), progress photos (every 4 weeks, same light/pose),
-  and strength numbers (the app charts all three).
+A single bad session is not a plateau. Review a trend over at least two or three
+weeks before changing the plan. If reps fall repeatedly, joints ache, sleep is
+poor or motivation collapses, reduce volume and recover rather than forcing an
+extra session.
 
-## Your specific milestones to watch
-- Week 2: 5–10 push-ups → 15+ push-ups
-- Week 4: squatting/benching with a real bar confidently; resting heart rate down
-- Week 6: first "wait, is that a shoulder?" mirror moment; waist −1–2 cm
-- Week 8: kegel benefits noticeable (6–8 week mark per Mayo Clinic); posture comments from others
-- Week 12: photos vs day 1 = visible transformation; main lifts 30–50% up
+## Twelve-week review
 
-## What stalls progress (in order of probability)
-1. Inconsistent sessions (missing 2+/week)
-2. Not enough protein (<110 g/day)
-3. Sleep <7 h
-4. Ego lifting → injury → forced time off
-5. Program hopping (changing routines every 2 weeks — pick this one, run all 12 weeks)
-
-## The rule of 12 weeks
-Evaluate ONLY at week 12, using photos + measurements + strength charts. Never judge the
-program on a single day, a single photo, or the scale.
+At the end of the block, ask: Did I attend? Are my reps cleaner? Can I use a
+little more load without form loss? Do I enjoy the schedule? Keep the exercises
+that are comfortable and useful; ask a coach or qualified professional before
+changing a movement that causes pain.

@@ -1,464 +1,228 @@
-# IronForge Renovation Guide
-
-Comprehensive audit of every feature, its criticism, and the fixtures / tests
-that should exist. This is a **renovation plan**, not a marketing doc — each
-section ends with **what to test** that defends a real, observable contract.
-
-> **Status (2026-09-06):** Release 2 deployed on yarmuk. Items marked ✅
-> shipped; 🟡 shipped with known limitation; 🔴 not yet shipped.
-
----
-
-## 0 · Design language — "Forge"
-
-**Source of truth:** `app/lib/theme.dart`
-
-### Decisions (research: WHOOP / Strong / Hevy 2026 dark-mode standard)
-
-| Token           | Value      | Purpose                                       |
-| --------------- | ---------- | --------------------------------------------- |
-| `bg`            | `#0A0A0B`  | App background (near-black, not pure #000)    |
-| `surface`       | `#131316`  | Cards                                         |
-| `surface2`      | `#1C1C21`  | Inputs, chips, pressed                        |
-| `text`          | `#F2F2F3`  | Primary text                                  |
-| `dim`           | `#9C9CA6`  | Secondary text                                |
-| `faint`         | `#5C5C66`  | Tertiary / placeholders                       |
-| `ember`         | `#FF5A1F`  | **Signature accent** — heat/fire/forge        |
-| `emberHot`      | `#FF8A5C`  | Highlights                                    |
-| `emberDeep`     | `#7A2A0C`  | Subtle dark ember fills                       |
-| `green`         | `#4ADE80`  | Success / logged                              |
-| `amber`         | `#FBBF24`  | Warning / streak                              |
-| `red`           | `#F87171`  | Destructive                                  |
-| `blue`          | `#60A5FA`  | Check-in                                      |
-| `streakRamp[0..4]` | 5-step ember | GitHub-style heatmap intensity          |
-
-### Rules enforced
-- **No purple→pink gradient spam.** `T.gradient` is now a dark ember→black
-  surface, not a brand banner. `GradientCard` has a hairline ember border.
-- **Color = information, not decoration.** Gradients are reserved for the
-  single "today's session" header; everywhere else, surfaces are flat.
-- **Oversized glanceable numerals** for streak / weight / time (WHOOP standard).
-- **Streak art = the streak itself.** `StreakHero` shows a 88px radial ember
-  glow whose intensity scales with `streakDays / 30`. The hotter the streak,
-  the hotter the glow. The art *is* the data.
-
-### Tests
-- **Visual snapshot:** open Learn screen, confirm StreakHero glow scales with
-  `streakDays=0` (faint), `=15` (medium), `=30+` (full). Manual today.
-- **Type render:** assert every surface bg in `theme.dart` is `#0A0A0B` ± `#0F0F12`
-  and never `#000000` (halation test).
-- **iOS / Android contrast:** run axe-core on dashboard; no contrast < 4.5:1.
-
----
-
-## 1 · Feature inventory (every feature that exists)
-
-### A. Auth & session
-| # | Feature                      | File                              | Status |
-|---|------------------------------|-----------------------------------|--------|
-| 1 | Argon2id password login      | `server/src/routes.js` (login)    | ✅     |
-| 2 | HttpOnly + Secure + SameSite cookie | `server/src/routes.js`     | ✅     |
-| 3 | Login rate limit (5/15min)   | `server/src/auth.js` (rateLimiter)| ✅     |
-| 4 | Forgot / reset password      | —                                  | 🔴     |
-
-**Criticism:** Single shared rate limit across all usernames allows trivial
-user-enumeration timing attacks. The bootstrap password is a permanent fallback.
-
-**Fixture:** Reset password flow with single-use token (1h TTL, email/SMS in
-future). Token endpoint behind its own rate limit (3/h).
-
-### B. Dashboard
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Header (week X of 12, phase)     | `screens/dashboard_screen.dart` | ✅ |
-| 2 | Program start date (auto-set)    | `state/app_state.dart:102`  | ✅     |
-| 3 | Today's session card             | `dashboard_screen.dart`    | ✅     |
-| 4 | Missed-yesterday nudge (amber)   | `dashboard_screen.dart:_MissedNudge` | ✅ |
-| 5 | Streak hero (radial glow)        | `widgets/ember_heatmap.dart` | ✅    |
-| 6 | 13-week consistency heatmap      | `widgets/ember_heatmap.dart` | ✅    |
-| 7 | Stats row (streak/weight/PRs)    | `dashboard_screen.dart:_StatCard` | ✅ |
-| 8 | Body-weight chart (fl_chart)     | `dashboard_screen.dart:_WeightChart` | ✅ |
-| 9 | Quick actions                    | `dashboard_screen.dart:_QuickActions` | ✅ |
-| 10| Program end date line            | `app_state.dart:programEndDate` | ✅ |
-
-**Criticism:** Phase text wraps into a paragraph; the "RIr · description" block
-becomes wall-of-text on first open. Should be a single `Headline·body`
-two-line card.
-
-**Fixture:** Phrase > 80 chars truncates with ellipsis. Verified manually today.
-
-### C. Workout logging
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Day selection                    | `screens/workout_screen.dart` | ✅ |
-| 2 | Exercise list per phase/month    | `data/program.dart`        | ✅     |
-| 3 | Set logging (weight × reps)      | `screens/workout_screen.dart` | ✅ |
-| 4 | Rest timer (auto)                | `screens/workout_screen.dart` | ✅ |
-| 5 | YouTube tutorial sheet           | `widgets/youtube_sheet.dart` | ✅   |
-| 6 | Save → server (POST /logs/workout) | `services/api.dart`     | ✅     |
-| 7 | Edit / delete entries            | `state/app_state.dart`     | ✅     |
-| 8 | Personal records (PR) detection  | `state/app_state.dart:personalRecords` | ✅ |
-| 9 | Progressive-overload hint        | `screens/workout_screen.dart` | ✅ (text only) |
-| 10| Offline queue + retry            | `state/app_state.dart:_enqueue` | ✅ |
-
-**Criticism:** PR detection is single-set based; misses "3 sets at 60kg > 1 set
-at 60kg" volume PRs. Overload hint is static text — not actually comparing
-last-session numbers.
-
-**Fixture:** Volume PR (`Σ weight × reps`) detected. Hint shows last week
-baseline vs this week and labels "+2.5kg vs last week".
-
-### D. Body weight & measurements
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Log weight (kg)                  | `screens/progress_screen.dart` | ✅ |
-| 2 | Log 4 measurements (chest, arms…) | `screens/progress_screen.dart` | ✅ |
-| 3 | Trend chart                      | `screens/progress_screen.dart:_BodyChart` | ✅ |
-| 4 | Edit / delete (any date)         | `state/app_state.dart`     | ✅     |
-
-**Criticism:** Units hardcoded kg. No switch for lb. India user may want kg,
-US user lb.
-
-**Fixture:** Settings → Units (kg/lb) toggle. Conversion: 1 lb = 0.4536 kg.
-Persists in `settings.units`. Affects display + logging.
-
-### E. Kegels
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Daily log (sets, hold seconds)   | `widgets/kegel_sheet.dart` | ✅     |
-| 2 | Edit / delete any entry          | `state/app_state.dart`     | ✅     |
-| 3 | Best streak (7-day window)       | `state/app_state.dart`     | ✅     |
-| 4 | Reminder notification (Android)  | `services/reminders.dart`  | ✅     |
-
-**Criticism:** "7-day" target is invisible. User has no idea what "good" is.
-
-**Fixture:** Show "7 of 7 this week" / "3 of 7 — 4 to go" in the kegel sheet.
-
-### F. Daily check-in
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Energy 1–5                       | `screens/progress_screen.dart:_CheckinCard` | ✅ |
-| 2 | Sleep hours                      | same                       | ✅     |
-| 3 | Water                            | same                       | ✅     |
-| 4 | Server upsert + delete           | `state/app_state.dart`     | ✅     |
-| 5 | Calendar grid (consistent days)  | `screens/progress_screen.dart:_ConsistencyGrid` | ✅ |
-| 6 | Missed-day nudge                 | `screens/dashboard_screen.dart` | ✅ |
-
-**Criticism:** Sleep and water prompts are inputs but never used by the coach
-or any chart. Dead data.
-
-**Fixture:** Add 7-day sleep chart and water-streak counter. Coach mentions
-sleep when energy < 3.
-
-### G. IronCoach (AI)
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | OpenRouter proxy                 | `server/src/routes.js` (ai) | ✅     |
-| 2 | Real-data context builder        | `server/src/ai.js`         | ✅     |
-| 3 | Chat history (server-persisted)  | `chat_messages` table      | ✅     |
-| 4 | Rate limit (8/min/user)          | `server/src/ai.js`         | ✅     |
-| 5 | `:online` search (when budget allows) | `server/src/ai.js`    | 🟡     |
-| 6 | Free-model default               | env: `OPENROUTER_MODEL`    | ✅     |
-| 7 | Refresh / scroll-to-latest       | `screens/coach_screen.dart` | ✅ (fixed today) |
-
-**Criticism:** Free tier has aggressive 429 limits; UX shows raw error toast.
-Context window includes Kegel ids (private data) — privacy concern.
-
-**Fixture:** Retry with backoff (3 tries, 1s/2s/4s), friendly error
-"AI is taking a break — try again in a minute". Strip kegel ids from
-context before sending to LLM.
-
-### H. Reminders (Android)
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Wake-up daily                    | `services/reminders.dart`  | ✅     |
-| 2 | Gym time Mon–Sat                 | `services/reminders.dart`  | ✅     |
-| 3 | Kegel daily                      | `services/reminders.dart`  | ✅     |
-| 4 | Boot persistence                 | manifest receiver          | ✅     |
-| 5 | Settings time pickers            | `screens/settings_screen.dart` | ✅ |
-| 6 | **No Sunday gym reminder**       | `services/reminders.dart`  | ✅     |
-
-**Criticism fixed today:** Previously fired daily — now weekly Mon–Sat only.
-**Verification path:** install APK on Android device, set gym time to 1 min
-from now, confirm Mon–Sat only.
-
-### I. Settings
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | Theme / accent                   | `theme.dart`               | ✅     |
-| 2 | Units                            | `app_state.dart` (hardcoded kg) | 🟡 |
-| 3 | Program start date               | `app_state.dart`           | ✅     |
-| 4 | Reminder times                   | `settings_screen.dart`     | ✅     |
-| 5 | Reminder enabled toggle          | `settings_screen.dart`     | ✅     |
-| 6 | Sign out                         | `settings_screen.dart`     | ✅     |
-| 7 | APK download                     | `settings_screen.dart`     | ✅     |
-
-**Criticism:** No "Reset password" / "Change password" (you can only sign out
-and re-create). No "Export my data" (GDPR). No "Delete account".
-
-### J. Sync & offline
-| # | Feature                          | File                       | Status |
-|---|----------------------------------|----------------------------|--------|
-| 1 | HTTP request cache               | `services/api.dart`        | ✅     |
-| 2 | Offline write queue              | `state/app_state.dart:_enqueue` | ✅ |
-| 3 | Sync indicator (banner)          | `state/app_state.dart`     | ✅     |
-| 4 | Service worker (web)             | `web/flutter_service_worker.js` | ✅ |
-
-**Criticism:** No conflict resolution — last-write-wins. If you edit a weight
-on phone, then on web, then sync, the web value overwrites. Fine for a single
-user, dangerous if you add multi-device later.
-
----
-
-## 2 · Clever tests (the matrix)
-
-### 2.1 Backend smoke (`server/test/smoke.sh`)
-
-Already exists; 29 checks pass. **Extend with:**
-
-```bash
-# notification scheduling intent: API contract only — actual Android
-# scheduling lives on the device, but the SERVER must not crash if a future
-# /api/prefs/notification-time endpoint gets a bad value.
-test "POST /api/prefs rejects bad time format" \
-  "POST /api/prefs {time:'25:99'} → 400"
-
-# AI context builder isolation
-test "AI context strips kegel ids" \
-  "POST /api/ai/chat with kegels in DB → context payload excludes kegel.id"
-
-# Heatmap intensity derived correctly
-test "intensity(day where trained+checkin+kegel) == 7" \
-  "log workout + checkin + kegel same day, GET /api/state, assert intensity 7"
-```
-
-### 2.2 Flutter unit tests (`app/test/`)
-
-Add to `program_test.dart`:
-
-```dart
-test('currentWeek returns 1 when startDate is empty', () {
-  final s = AppState.test();
-  expect(s.currentWeek(), 1);
-});
-
-test('bestStreak handles Sunday gaps correctly', () {
-  // workouts on Mon, Tue, Wed, Mon (next week) → best = 3, not 1
-});
-
-test('heatmapCells combines bits without collision', () {
-  // workout=2, checkin=1, kegel=4 → 2|1|4 = 7
-});
-
-test('reminder scheduling skips Sunday (dateTimeComponents.dayOfWeekAndTime)',
-  () {
-  // mock TZDateTime.now() to a Monday, schedule gym reminder for 17:00,
-  // assert ids 1011..1016 (Mon..Sat) and NO Sunday id.
-});
-```
-
-### 2.3 End-to-end manual (every release)
-
-```
-[ ] Login as mjonir / password-from-1password
-[ ] Dashboard renders, no overflow at 340px
-[ ] Today's session card → tap → workout screen
-[ ] Add 3 sets of 20kg bench press → save → success snackbar
-[ ] Back to dashboard → streak hero shows 1 day
-[ ] Check-in card → energy 4 → save → done state
-[ ] 13-week heatmap shows today as ringed ember cell
-[ ] Coach tab → first message loads at BOTTOM (post-load scroll)
-[ ] Send "Review my last week" → AI reads real data, no kegel.id leak
-[ ] Settings → change wake-up time to 06:00 → Android reschedules
-[ ] Sign out → sign in again → dashboard rehydrates
-```
-
-### 2.4 Notification verification (Android device)
-
-```
-[ ] install APK on real device (NOT emulator — local notifications behave
-    differently on emulators)
-[ ] set gym time to 1 minute from now
-[ ] wait 90 seconds — push arrives
-[ ] set system time to Sunday 17:01 — no gym notification fires
-[ ] reboot device — ScheduledNotificationBootReceiver re-arms
-```
-
-### 2.5 Visual sanity (browser, mobile viewport)
-
-```
-[ ] open at 360x800 (small Android)
-[ ] dashboard — no horizontal scroll, no RenderFlex overflow
-[ ] coach screen — bubbles don't exceed 82% width
-[ ] settings — switches and time pickers fit on one row
-```
-
----
-
-## 3 · App icon design (SVG spec for asset pipeline)
-
-> User asked to include an icon design — here's the spec for the build pipeline
-> to render at all densities (mdpi → xxxhdpi, 48×48 → 192×192).
-
-### Concept: a stylized anvil with an ember dot
-
-Visual reads at 16×16: black square with one bright ember pixel in the upper-right
-quadrant — the **"spark"**. At larger sizes the anvil is recognizable.
-
-```svg
-<svg viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="spark" cx="50%" cy="50%" r="50%">
-      <stop offset="0%"  stop-color="#FFB280"/>
-      <stop offset="40%" stop-color="#FF5A1F"/>
-      <stop offset="100%" stop-color="#7A2A0C" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="anvil" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%"  stop-color="#26262C"/>
-      <stop offset="100%" stop-color="#131316"/>
-    </linearGradient>
-  </defs>
-
-  <!-- adaptive background: near-black, rounded to 42px for iOS squircle feel -->
-  <rect width="192" height="192" rx="42" fill="#0A0A0B"/>
-
-  <!-- anvil silhouette: top horn, waist, base, foot -->
-  <g fill="url(#anvil)" stroke="#3A3A44" stroke-width="1.5" stroke-linejoin="round">
-    <!-- top (the "horn" you hammer on) -->
-    <path d="M 38 84
-             L 154 84
-             L 142 70
-             L 50 70 Z"/>
-    <!-- waist (narrow) -->
-    <rect x="78" y="84" width="36" height="14"/>
-    <!-- base (broad) -->
-    <rect x="44" y="98" width="104" height="22" rx="3"/>
-    <!-- foot -->
-    <rect x="60" y="120" width="72" height="10" rx="2"/>
-  </g>
-
-  <!-- ember spark sitting on the horn — this is the brand color, the focal
-       point, the only saturated pixel in the icon -->
-  <circle cx="124" cy="77" r="11" fill="url(#spark)"/>
-  <circle cx="124" cy="77" r="3"  fill="#FFE0CC"/>
-
-  <!-- subtle highlight on the anvil top edge to suggest heat -->
-  <path d="M 60 70 L 142 70" stroke="#FF5A1F" stroke-opacity="0.35" stroke-width="1"/>
-</svg>
-```
-
-### Why this icon
-- **Reads at 16px** — black square, one ember dot. Launcher grid.
-- **Tells the brand** — "forge" = anvil + ember, the source metaphor.
-- **Saturated on purpose** — single ember pixel among greys, matches in-app
-  accent. Memorable because the rest of the system is dark+ember; the icon
-  is the smallest version of the same vocabulary.
-
-### Build steps (Android)
-1. Save as `app/icon/icon.svg`.
-2. Use `flutter_launcher_icons` (already in `pubspec.yaml`) with
-   `image_path: "icon/icon.svg"` — it auto-renders all densities.
-3. iOS: place `AppIcon.appiconset/icon-1024.png` and use `xcassets` (or
-   `flutter_launcher_icons` handles both).
-
-### Test
-- [ ] icon renders correctly at 48, 72, 96, 144, 192 in Android Studio's
-      resource preview
-- [ ] iOS icon appears correctly in the home screen after install
-- [ ] at 16px (status-bar size) the ember spark is still visible
-
----
-
-## 4 · Critical bugs found in this audit (with priority)
-
-| Pri | Bug | File | Fix |
-|-----|-----|------|-----|
-| P0 | Gym reminder fired Sundays until today | `services/reminders.dart` | ✅ weekly per-weekday scheduling |
-| P0 | Coach screen opened at FIRST message (top) | `screens/coach_screen.dart` | ✅ jumpTo(maxScrollExtent) on load |
-| P1 | Weight + measurement "save" not visibly confirmed | `screens/progress_screen.dart` | 🟡 snackbar; should be inline + undo |
-| P1 | AI 429 errors raw, no retry / friendly copy | `screens/coach_screen.dart` | 🔴 3x exponential backoff, friendly toast |
-| P1 | "Personal records" definition is single-set max weight only | `state/app_state.dart:personalRecords` | 🔴 add volume PR (Σ w×r) |
-| P2 | Sleep + water never used anywhere | `state/app_state.dart` | 🔴 7-day chart, coach context mention |
-| P2 | No password change | `screens/settings_screen.dart` | 🔴 forgot + change endpoints |
-| P2 | No unit toggle (lb/kg)              | `state/app_state.dart`      | 🔴 kg/lb setting + conversion |
-| P3 | Bootstrap credentials printed to logs | `server/src/index.js` | 🔴 print only on first run, redact after |
-| P3 | Static "Overload" text in workout    | `screens/workout_screen.dart` | 🟡 compare to last-week, show diff |
-
----
-
-## 5 · Why "AI chat opens at first message" — root cause
-
-`CoachScreen._loadHistory` did:
-```dart
-setState(() { _msgs = ...; });
-// end of method — no scroll
-```
-
-`ListView.builder` defaults to scroll position 0, so the LATEST message
-(at the bottom of the list) was off-screen. The scroll-to-bottom was
-attached to `_ask` (when you send a message) but never to the initial load.
-
-**Fix (today):** in `_loadHistory`, after setState:
-```dart
-WidgetsBinding.instance.addPostFrameCallback((_) {
-  if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.maxScrollExtent);
-});
-```
-
-Instant jump (not animate) so the first paint lands on the latest message,
-not a scroll-in-progress that looks broken on cold open.
-
-**Re-occurrence check:** any other `ListView.builder` driven by a
-server-persisted history needs the same pattern. Audit:
-- `coach_screen.dart` ✅
-- `progress_screen.dart` (history card uses `Column` not ListView, OK)
-- `workout_screen.dart` (history is per-day, fixed-length, OK)
-- `settings_screen.dart` (no chat list)
-
----
-
-## 6 · Notification system — full verification path
-
-| Check | How | Pass criterion |
-|-------|-----|----------------|
-| Manifest receiver `exported` | `aapt dump xmltree app.apk AndroidManifest.xml` | both receivers `exported="false"` |
-| POST_NOTIFICATIONS permission | `aapt dump permissions app.apk` | present |
-| desugaring on | `unzip -p app.apk classes.dex \| dexdump - \| grep "java.time"` | desugared APIs present |
-| Timezone init | logcat `I/flutter: timezone=Asia/Kolkata` | matches device tz |
-| Channel created | logcat `NotificationChannel ironforge_daily` | channel shown in Android Settings |
-| Schedule fires | set wake-up 1 min ahead, wait 90s | push arrives |
-| Sunday skipped | set device clock Sun 17:01:00 | NO gym push |
-| Re-arm after reboot | `adb reboot` | push arrives next day |
-
-### Known limitations (in this release)
-- `androidScheduleMode: inexactAllowWhileIdle` — notifications can fire ±5-15
-  min late. Acceptable for gym reminders. Document in app onboarding.
-- No `SCHEDULE_EXACT_ALARM` — Play Store may warn on this for new uploads;
-  can add it for Android 14+ if user complains.
-
----
-
-## 7 · Performance budgets
-
-- Dashboard initial paint (cold start): < 800ms on mid-range Android
-- Workout save round-trip: < 400ms on local network
-- AI first token: < 2s on OpenRouter free tier (when quota available)
-- Heatmap render: < 100ms (13 weeks × 7 days = 91 cells, trivial)
-
----
-
-## 8 · What to ship next (priority order)
-
-1. **Password change** — basic auth security feature, expected by every app.
-2. **AI retry + friendly error** — without this, free tier is unusable in
-   production.
-3. **Volume PR + dynamic overload hint** — what makes a fitness app
-   actually useful vs. just a log.
-4. **Units toggle (kg/lb)** — for any non-Indian user.
-5. **Icon pipeline** — apply SVG spec above; ship a recognizable launcher icon.
-6. **Privacy: strip kegel ids from AI context** — small code, big trust.
-
----
-
-*Author: MiniMax M3 (Free) via the Renovation audit pass, 2026-09-06.*
-*Status: every ✅ line is verified on yarmuk production.*
+# IronForge audit and change log
+
+**Workspace:** `/home/quilt/f/projects/gym`
+**Repository:** `Pamure/gym`
+**Date:** 20 September 2026
+**Deployment/push:** initial audit was local only. On 30 September 2026 a later explicit user request authorized a web/server deployment; no Git push or APK upload was performed.
+
+## User brief translated into product requirements
+
+- A first-time lifter needs a clear “what do I do next?” flow, not six dense body-part screens.
+- Each exercise must explain equipment identification, setup, form cues, mistakes, rest and an alternative.
+- The same plan must be used by the workout screen, dashboard, reminders and IronCoach.
+- Login should survive normal app use without an unnecessarily short session; explicit logout must stay explicit.
+- Android should request notification/alarm permissions for a 06:30 wake-up, while honestly stating that Android/OEM settings can still delay or silence it.
+- Web and Android should remain the same Flutter app; web does not have native push reminders.
+
+## Findings and fixes completed in this pass
+
+### P0 — build/data correctness
+
+- **Fixed:** `app/lib/data/diet_database.dart` was Python syntax saved with a `.dart` extension, producing hundreds of analyzer errors. Replaced it with typed Dart food, search and budget-plan models. Prices and nutrition are explicitly approximate.
+- **Fixed:** removed the zero-set `front-squat` month placeholder and moved the visible plan to three required full-body sessions with no zero-set cards.
+- **Fixed:** repeated Save now replaces the local `(date, exercise)` log, matching the server upsert and preventing duplicate volume/history.
+- **Fixed:** restored the persisted offline operation queue on startup.
+- **Fixed:** invalid blank/zero-rep weight sets are rejected with a user-facing message.
+- **Fixed:** most-recent exercise prefill now chooses the newest matching log instead of the oldest.
+
+### P1 — beginner program and UX
+
+- **Fixed:** canonical plan is Monday/Wednesday/Friday full-body strength; Tuesday/Thursday/Saturday are optional easy movement; Sunday is full rest.
+- **Added:** `app/lib/data/exercise_guides.dart` with equipment, “find it”, setup, alternatives and self-checks for the main exercises.
+- **Added:** expanded workout cards show a beginner flow, per-exercise rest, equipment notes and optional-activity completion.
+- **Added:** Learn → Start here explains the weekly map, progression, coach-list migration and safety stop signals.
+- **Updated:** nutrition copy no longer hardcodes an unsupported calorie/protein prescription for an unknown person.
+- **Updated:** dashboard progress is `x / 3 strength sessions`, not the obsolete five/six-day target.
+- **Removed:** punishment/extra-set language. Missed sessions are resumed, never punished.
+
+### P1 — auth/session and sync
+
+- **Fixed:** new accounts now persist the canonical start date locally immediately.
+- **Fixed:** mobile logout clears the persisted cookie, cancels reminders, clears all local collections including check-ins, and writes a local logout tombstone so an offline logout cannot silently re-authenticate.
+- **Fixed:** an API 401 during sync changes the app to logged-out instead of pretending that a server-expired session is offline.
+- **Changed:** server session lifetime is 30 days (still HttpOnly, Secure and bounded); explicit logout/password change invalidates sessions.
+- **Updated:** Settings describes the actual session and storage/reminder behavior.
+
+### P1 — Android reminders
+
+- **Fixed:** all old prep reminder IDs are cancelled; the old nested scheduling loop is gone.
+- **Changed:** notifications align with required strength days and optional movement days, never Sunday.
+- **Added:** exact-alarm permission request and manifest permission; fallback remains inexact when Android denies exact alarms.
+- **Added:** cancellation on explicit logout.
+- **Limitation:** no app can guarantee waking a powered-off phone, bypass Do Not Disturb, battery optimization or user notification settings. The app now says this clearly.
+
+### P1 — web outlet
+
+- **Updated locally:** rebuilt the Flutter web app and refreshed the tracked `server/web` bundle so the server's web route contains the same beginner plan and metadata as Android. This is an artifact update only, not a deployment.
+
+### P1 — AI consistency
+
+- **Updated:** `server/src/ai.js` uses the same canonical routine and 2026-09-21 → 2026-12-13 dates as the app. It no longer recommends punishment or claims an unverified 500-food database.
+- **Safety:** AI is told not to invent health facts and to refer sharp/persistent symptoms to a qualified clinician.
+
+## Research record
+
+Sources reviewed for the program and platform behavior:
+
+1. ACSM 2026 resistance-training position stand: https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/
+2. Full-body vs split systematic review (2024): https://pubmed.ncbi.nlm.nih.gov/38595233/
+3. Failure vs non-failure review: https://pmc.ncbi.nlm.nih.gov/articles/PMC9068575/
+4. Rest intervals review (2024): https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/fspor.2024.1429789/full
+5. WHO activity guidance: https://www.who.int/publications/i/item/9789240015128
+6. Android alarms: https://developer.android.com/develop/background-work/services/alarms
+7. Android 14 exact alarms: https://developer.android.com/about/versions/14/changes/schedule-exact-alarms
+8. Android notification permission: https://developer.android.com/develop/ui/compose/notifications/notification-permission
+
+Research supports a range of effective routines. It does not establish a single perfect exercise list for every beginner; the app uses a conservative starting plan and same-pattern alternatives.
+
+## Verification log
+
+- `cd app && flutter analyze`: **passed — no issues found**.
+- `cd app && flutter test`: **passed — 17 tests**.
+- `cd app && flutter build web --release`: **passed**.
+- `cd app && flutter build apk --debug`: **passed**; debug APK generated locally at `app/build/app/outputs/flutter-apk/app-debug.apk`.
+- `cd server && npm run smoke`: **passed — 31 checks**, including malformed reminder/unit settings.
+- `cd server && npm audit --omit=dev`: **0 vulnerabilities** after upgrading `@fastify/static`.
+- `git diff --check`: **passed**.
+- Debug APK and web artifacts were built locally for verification; no Android install, server deployment or GitHub push has been performed.
+
+## Follow-up UI/error pass — 29 September 2026
+
+- **Fixed:** inactive streak `RadialGradient` supplied two colors with three stops, which crashed Flutter web rendering. Active and inactive states now have matching color/stop lengths.
+- **Changed theme:** replaced near-black/ember-orange with a calm navy + teal + coral palette. Text and primary accents were chosen with WCAG contrast guidance in mind; W3C recommends at least 4.5:1 for normal text. Source: https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html.
+- **Fixed:** fresh web browsers no longer probe `/api/me` before the user has logged in, removing the expected noisy 401 during first load. Expired sessions still become logged out correctly.
+- **Fixed:** YouTube sheets no longer instantiate the unreliable embedded player that showed Android error 152-4. Both web and Android now show a tappable thumbnail and open the official YouTube app/browser directly.
+- **Improved:** AI 503/429 responses now become understandable in-app messages instead of raw Dio exceptions. Local workout/forms remain available when AI is not configured.
+- **Improved:** notification details explicitly enable sound/vibration. Android manifest and runtime flow cover Internet, notifications, reboot rescheduling and optional exact-alarm access. No camera/location permission is requested because the app does not use those capabilities.
+- **Added:** every strength exercise now has a real rest countdown beside its rest guidance. This is more useful on the gym floor than a static “90 seconds” label.
+- **Fixed:** bundled Noto Color Emoji fallback for web/Android so workout-day icons and reminder emoji do not rely on a browser's missing-font set.
+- **Critic correction:** Friday is now a distinct Full Body C (goblet squat, bench, row, leg curl, face pull, farmer walk) rather than repeating Monday A. Weekly movement coverage is more balanced while remaining three sessions.
+- **Preview:** rebuilt web bundle and restarted a temporary local preview at `http://localhost:8420`; local demo credentials are intentionally not recorded in version control.
+
+## Safe IronCoach key configuration — 30 September 2026
+
+- Added `server/src/load-env.js`, which reads only the ignored local `server/.env` file and never overwrites an environment variable supplied by the shell/container.
+- Added an empty `server/.env` placeholder with mode `600`; no secret was written. Git confirms it is ignored.
+- Added `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` and `AI_SEARCH` guidance to `server/.env.example` and `README.md`.
+- The key remains server-side and is never included in Flutter, `server/web`, API responses or logs. Restart the server after editing the file.
+- `npm run smoke` still passes all 31 checks after this change.
+- Owner supplied a quoted key value; loader verification reported `configured=true` without printing its contents. Preview server restarted successfully at `http://localhost:8420`.
+
+## Morning checklist for the owner
+
+1. Run the tests below on the device/emulator and inspect the three required sessions.
+2. Open Workout → expand an exercise → check the GIF, tutorial link, equipment note and alternative.
+3. Enable reminders on Android; grant Notifications and, if desired, Alarms & reminders access. Test 06:30 with a temporary nearby time first.
+4. Confirm the UFC gym coach demonstrates one light goblet squat, press, pulldown and hinge before loading weight.
+5. Only after reviewing the diff and approving it should anyone build, deploy or push.
+
+## Critic pass — screenshots, browser preview, product and plan
+
+### What I inspected
+
+- Supplied screenshots of Workout and IronCoach from `localhost:8420`.
+- Refreshed local web bundle served by the preview server.
+- Direct health, unauthenticated `/api/me`, demo login, authenticated state and YouTube thumbnail requests.
+- Flutter analyzer/tests and Android/web release builds.
+- A headless Brave attempt. Brave initialized Flutter/WebGL but did not exit or emit a screenshot in this environment, so I did not claim a clean automated visual pass. The supplied screenshots remain the visual evidence.
+
+### Findings
+
+1. **Critical rendering bug:** inactive streak glow had two colors and three stops. Fixed and covered by matching conditional lists.
+2. **Visual hierarchy:** the prior near-black/orange design made secondary text and the gym-floor flow hard to scan. Replaced with navy surfaces, readable light text, teal primary actions and coral highlights. W3C contrast guidance is recorded above; key palette pairs exceed 4.5:1 by calculation.
+3. **Video:** the supplied screenshots showed Android YouTube error 152-4. The player package was removed; both platforms now use a tappable thumbnail plus a prominent external YouTube action.
+4. **Auth console noise:** a fresh browser used to call `/api/me` and show an expected 401 before login. New browsers now go directly to login; a real expired session still logs out safely.
+5. **AI:** the local server has no `OPENROUTER_API_KEY`, so AI chat cannot work in the preview. This is now a clear in-app explanation rather than a raw 503 exception. The workout, form library and logging do not depend on AI.
+6. **Plan:** the original six-day split was too complex for this beginner block. The revised 3-day plan is appropriate as a simple starting point, but it requires an in-person coach to check the first squat/hinge/press. Friday is now distinct Full Body C to avoid repeating one session pattern every week.
+7. **What I deliberately did not add:** an “angry” coach or punishment system. Guilt and forced extra sets are poor coaching; the app uses calm, concrete next actions. Custom reminder times already exist, and native Android permission behavior still needs physical-device verification.
+8. **Remaining usability opportunity:** a future “Gym floor mode” should show one exercise at a time with larger controls and hide the 12-week/day selector clutter. It is not claimed as shipped in this pass.
+
+### Browser/API checks from the refreshed preview
+
+- `/api/health` → `200 {"ok":true}`
+- Fresh unauthenticated `/api/me` → `401 {"error":"unauthenticated"}` by design; no longer called on a brand-new local browser before the login screen.
+- Demo login → `200`
+- Authenticated `/api/state` → empty valid state
+- YouTube thumbnail → `200`
+- Preview index → `Cache-Control: no-store`
+
+## Follow-up not silently claimed as complete
+
+- Real-device Android alarm behavior across OEMs needs a physical-device test.
+- The nutrition catalog is an offline planning aid, not 500 verified entries or a personalized meal prescription.
+- Web has no native push reminder; an explicit in-app banner can be added if desired.
+- Release signing still needs a real keystore before distribution.
+- There is no automated browser/device screenshot test in this environment.
+
+## 30 September 2026 — response to `pleasereadthis.md`
+
+This is a local source/build/test pass, **not** a deployment, live-production audit, or Android-device/browser verification. The earlier note above about an *empty* `server/.env` describes the initial setup; the owner later populated an ignored, mode-600 local key. This pass did not read, copy, print, or send that key. All server tests ran with `LOAD_LOCAL_ENV=0` against disposable databases; no production data was touched.
+
+### High-risk findings resolved
+
+- **F01/F02/F07:** one API error path now rejects non-2xx responses for all reads and writes. Rejected client writes roll back; retryable failures stay queued. Mutation intent is persisted before any HTTP request, queued uploads are reconciled before a state pull, each acknowledgement is persisted, and Settings Sync now reports remaining pending changes rather than an unconditional success. Added transport-backed Flutter tests for a pending older weight across restart, a newer save, an in-flight save replay after simulated restart, a stale refresh racing a save, 400/401 rejection, and no loss on logout.
+- **F03/F10:** each new pelvic-floor session has a distinct temporary client ID and server-assigned real ID. Server idempotency is persisted and user-scoped, so replay after a lost response does not create a second session; deletes reconcile with real or pending IDs. Multiple same-day sessions remain possible.
+- **F04:** logout attempts to sync first; if writes remain, it refuses by default and the Settings UI requires an explicit warning and confirmation before intentionally discarding the only local copy. The UI no longer claims an offline write already exists on the server.
+- **F05:** ignored runtime bootstrap JSON, SQLite DB/WAL/SHM, and downloadable APK were removed **from Git's index only**; local files were retained. `.gitignore` and `.dockerignore` now exclude them. This does **not** erase any already-published Git history; investigate exposure and rotate credentials/session material through a separately authorized procedure before any future publish.
+- **F06:** backup now awaits the SQLite snapshot, validates the backup can reopen, writes to a mounted persistent location with retention applied to that same location, and does not create an empty source. Deploy/hardening scripts now check prerequisites, isolate temporary credentials, and protect the download artifact. Local isolated backup/restore and static script tests pass; cron/container recovery on the real host has **not** been verified.
+
+### Other audit fixes
+
+- **F08/F09:** server workout replacement is atomic, including deletion of omitted sets; the state endpoint returns complete check-in/kegel history instead of silent 60/90-row truncation.
+- **F11/F12/F13:** cached reminder choices survive offline restarts; logged-out startup cannot reschedule, same-process login reapplies settings, and exact-alarm permission does not repeatedly prompt on startup. The gym schedule excludes Sunday, while daily wake/recovery nudges honestly say they can still run Sunday. Local JSON export includes check-ins, settings and a pending-operation count (not replayable commands), and is clearly labelled as **not** a full server backup (chat history is not included).
+- **F14–F17/F19/F20/F22:** completed strength sessions require at least three distinct planned loaded lifts rather than one logged activity, optional days do not penalize required-session streaks, heatmap scores actual categories, optional cardio shows the program's target duration, all programmed floor moves have guidance, unsafe movement-pattern substitutions were corrected, chart week labels and week-preview-vs-save identity are corrected. Timed carries are excluded from kg×reps volume and labelled in seconds in history.
+- **F21/F23:** the logbook now describes only its actual edit/delete affordances. Weight/measurement inputs still use kg/cm; `lb` remains an incomplete legacy API preference, **not** a supported UI unit mode.
+- **F24–F29/F32/F33/F35:** CSP permits the web tutorial thumbnail fetch; coach HTTP errors are classified by status; the AI prompt uses saved plan dates and local Delhi dates, omits pre-enrolment/today/post-program false missed sessions, and has a bounded total deadline. External AI data transfer is disclosed in login/coach copy; selected-state text contrast and some icon/field/heatmap accessibility labels were corrected. Entry scripts have non-stale cache headers.
+- **F36/F37/F39/F40/F41/F42/F43:** deploy now excludes the APK from broad rsync and securely serializes temporary bootstrap credentials; docs were revised to distinguish implemented auth/backups from unverified Cloudflare/host claims and correct API shapes. Literal-only Flutter tests were replaced with behavioral tests; the isolated server suite checks persistence/validation/security boundaries without calling an AI provider. Empty mini-heatbar scaffolding was removed.
+- **Extra validation:** impossible dates, zero-rep sets, arbitrary reminder flags/times and unknown JSON fields are rejected by the server. `npm update fast-uri` updated vulnerable transitive package versions within their compatible major lines, with no dependencies requiring a major-version override.
+
+### Explicitly deferred / not proven
+
+- **F18 (partial):** carry seconds and volume labels are corrected, but guided pelvic-floor repetitions still share the legacy `sets` database field with older set-based records. UI calls the old count “recorded holds/sets”; a schema migration plus per-set/repetition timer model would be required to preserve exact semantics. Floor moves marked done still use synthetic completion sets, not measured time/reps.
+- **F23:** displaying and converting a true lb preference consistently needs a full input/chart/history migration; the user-facing app remains kg/cm.
+- **F30/F31:** nutrition remains static; the typed search/budget helpers are not an interactive screen and are not typo-tolerant. Detailed health/nutrition/sexual-health copy needs a separate expert content reconciliation; do not treat price, protein, pelvic-floor outcomes or hydration targets as personalized advice.
+- **F34:** an already open web app can queue changes during API failure, but a fully offline browser cold reload remains unsupported (service worker unregisters itself). Native Android assets bundle with the APK; Android offline/notification behavior has not been tested on physical hardware.
+- **F42:** the legacy `server/test/extended.sh` is still unsafe to run on a real server or configured AI provider; it was not executed. Use the new isolated regression tests and smoke fixture instead.
+- **F38:** release APKs still use the debug signing config; configure a durable private release keystore before distribution. A successful local build is not release-signing readiness.
+- Multi-device concurrent edits have no server revision/conflict-resolution protocol. Offline writes must remain on the same device until synced; clearing browser storage can lose them. The settings export is not a SQLite restore image. Historical Git exposure, Android alarms, live backups, external AI responses, cloud access rules and visual browser/device regression were not verified by these tests.
+
+### Verification for this pass
+
+- Flutter transport/behavior tests use an in-memory HTTP adapter and mocked preferences; no external network or DB. Flutter `analyze` and tests: **18 passed, zero analyzer issues** after the final UI edits.
+- Server `LOAD_LOCAL_ENV=0 npm test`: **16 passed**, covering backup/restore, atomic replacement, idempotency, validation, authentication and AI program-date context. `LOAD_LOCAL_ENV=0 npm run smoke`: **31 checks passed**, isolated data only.
+- `npm audit --omit=dev`: **0 vulnerabilities** after compatible `fast-uri` lockfile updates. `bash -n deploy/deploy.sh deploy/harden.sh` and `git diff --check`: passed; deployment and hardening scripts were **not run**.
+- `flutter build web --release`: passed; updated `server/web` bundle locally during this audit pass. `flutter build apk --release`: passed locally; **debug-signed**, not distribution-ready. Build warnings noted: Flutter's future Kotlin Gradle Plugin compatibility warning for `flutter_timezone`, Android SDK XML tool-version mismatch, and 19 newer pub packages outside current constraints. No install or push during the audit pass.
+
+## Authorized deployment — 30 September 2026 (after the audit pass)
+
+The owner then explicitly requested running the deploy script. Preflight confirmed local Flutter/rsync, remote SSH/rsync/Docker Compose and an existing remote `.env`. Both rsync dry runs reported **no deletions**. Ran `./deploy/deploy.sh --no-apk` once: Flutter web build passed, server/web files synchronized, Docker rebuilt/recreated the application container, and the script reported **DEPLOY OK**. `--provision` and `deploy/harden.sh` were **not** run; local secrets and runtime database files were excluded from rsync. The remote APK was deliberately not replaced because release builds still use a debug signing key. No Git push occurred.
+
+Post-deploy read-only checks on the remote host: container `running`, `/data` mounted as a Docker `volume`, remote `.env` mode `600`, `/api/health` returned `200 {"ok":true}`, unauthenticated `/api/state` returned `401`, `/main.dart.js` returned `Cache-Control: no-store`, and the deployed `main.dart.js` SHA-256 matched the just-built local web artifact. These checks do **not** verify login, real user data migration, AI provider responses, live backup restoration, public Cloudflare Access behavior, or physical-device Android functionality. Do not treat the debug-signed local APK as distribution-ready.
+
+## Free-only IronCoach repair and fresh web/server deploy — 30 September 2026
+
+With explicit owner authorization, checked OpenRouter's public model list and ran a small number of **`:free`-only** requests using the key already injected in the remote container. The key was never printed, copied, or sent to Flutter. The old remote override `minimax/minimax-m3:free` was no longer listed. Qwen3.8-27B and Gemma 4 26B returned 429; Lightning timed out; some other free variants returned empty/provider errors. `nvidia/nemotron-3-super-120b-a12b:free` returned short, appropriate safety answers in roughly 3–5 seconds, including a synthetic beginner-gym scenario. `nvidia/nemotron-3-ultra-550b-a55b:free` also answered in roughly 10 seconds. OpenRouter key diagnostics reported available free daily quota; current provider capacity remains variable.
+
+Updated `server/src/ai.js` to choose verified Super first and Ultra as fallback, silently migrate **only** the retired Minimax override without editing the secret-bearing remote `.env`, refuse any model ID not ending in `:free`, and ignore `AI_SEARCH` because an online suffix has not been established as free. `server/.env.example` and `README.md` explain this. `LOAD_LOCAL_ENV=0 npm test` **17/17**, isolated smoke **31 checks**, `npm audit --omit=dev` **0 vulnerabilities**, and `git diff --check` passed.
+
+Ran `./deploy/deploy.sh --no-apk` again after a dry run showed no deletions. Script reported **DEPLOY OK**; container is running, `/api/health` returned `200`, unauthenticated `/api/state` returned `401`, script cache headers remained `no-store`, and the running AI source SHA-256 matched the new local source. Public site GET returned HTTP `200`; deployed web JS matched the freshly built output. The remote environment key remained configured without being exposed. Finally, inside the fresh container, an authenticated Fastify `POST /api/ai/chat` using a **disposable `/tmp` database, synthetic user and synthetic question** returned HTTP `200` with a nonempty, relevant answer from `nvidia/nemotron-3-super-120b-a12b:free` in about 5 seconds. The temporary test database was deleted. No real account, personal history, production database, release APK, host hardening, Git push or paid/untagged model was used. Free-tier limits/provider availability can still change; actual phone/browser login was not exercised.
+
+## Coach-plan and responsive UI pass — local only
+
+I inspected the supplied WhatsApp screenshots in the project root. They confirmed the reported problems: Save was clipped in a narrow workout card, dense side-by-side rows pushed actions off-screen, large horizontal selectors hid context, and Android YouTube showed error 152-4. The settings screenshot also showed a tall native time picker; that is platform UI rather than app copy.
+
+- Added a runtime **Gym trainer plan** based on the supplied six-day UFC Okhla list, preserving the trainer's original labels and written targets. The Workout screen defaults to this plan and offers a clearly labelled **Starter guidance** switch for the conservative three-day IronForge plan.
+- Added catalog entries and equipment/alternative guidance for the missing movements: decline bench, dumbbell fly, chest press machine, pec deck, front/reverse raise, shrugs, seated cable row, close-grip pull, back extension, barbell/cable/preacher/hammer curls, triceps extensions/skull crushers, leg extension and other aliases.
+- Unclear trainer names are visibly marked **ASK TRAINER**: “Revers” is marked likely reverse fly, “Seated”, “Close grip” and “One-arm machine” require confirmation, and “Roughf nd toughf” remains a clarification placeholder. “Behind lat pull” is not implemented literally; it uses a front-of-neck pulldown and is marked **SAFER REPLACEMENT**. The app offers mainstream dumbbell, bodyweight, cable or simpler alternatives in every relevant guide.
+- Coach targets such as 4 × 12 remain visible, but the first-month app dose starts at one set and builds only when technique/recovery are good. This keeps the trainer plan recognizable without telling a new lifter to complete the full written volume immediately.
+- Redesigned the Workout header with a compact plan toggle plus dropdowns for week/day instead of two long chip strips. Primary logging actions are full-width and stacked; tutorial/media, rest controls and coach notes wrap safely on narrow phones. Dashboard quick actions, Learn weekly rows, kegel actions and small-screen navigation now adapt instead of forcing long rows.
+- Removed the global emoji font fallback that could make normal body text render with abnormal spacing. The app remains on the platform sans-serif for normal copy.
+- Removed `youtube_player_iframe`; the video sheet is now scrollable, has a tappable thumbnail and a full-width “Open in YouTube” button. This avoids the broken embedded player rather than displaying a known failure state.
+
+Current local checks after this pass: Flutter analyzer **passed with no issues**, Flutter tests **21 passed**, `flutter build web --release` passed, and `flutter build apk --release` passed. The latest APK is local at `app/build/app/outputs/flutter-apk/app-release.apk`; it is still debug-signed. The built web bundle was refreshed in `server/web` locally, but this UI/coach-plan pass was **not deployed**. A physical Android small-screen/font-scale test and real gym walk-through remain required.
+
+## Authorized deployment of coach-plan/UI pass — 30 September 2026
+
+The owner explicitly authorized the latest site deployment. Ran `./deploy/deploy.sh --no-apk`; local/remote preflight passed and the only dry-run deletion was the obsolete `youtube_player_iframe` web player asset. Web/server files were synchronized, the container was rebuilt/recreated, and the script reported **DEPLOY OK**. The APK was not uploaded or changed; the remote APK remained 22,803,940 bytes. Remote `.env` and `/data` were protected by the deployment exclusions.
+
+Read-only post-deploy checks passed: container `running`, `/data` Docker volume mounted, `.env` mode `600`, health `200`, unauthenticated state `401`, entry JavaScript `Cache-Control: no-store`, public `https://gym.abba-s.dev/` HTTP `200`, and the deployed web bundle SHA-256 matched the local build. The obsolete embedded-player asset is gone. No production data was read or mutated, no host-hardening script ran, and no Git push occurred.

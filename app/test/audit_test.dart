@@ -1,104 +1,88 @@
-// Additional Flutter unit tests for the renovation audit matrix.
-// Run with: cd app && flutter test
-
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ironforge/state/app_state.dart';
 import 'package:ironforge/data/program.dart';
-import 'package:ironforge/services/reminders.dart';
+import 'package:ironforge/services/api.dart';
+import 'package:ironforge/state/app_state.dart';
 
 void main() {
-  group('app_state', () {
-    test('currentWeek returns 1 when startDate is empty', () {
-      // We can't instantiate AppState without DI, but we can verify the
-      // pure-function behavior at the call site.
-      // The contract: if startDate is empty string, currentWeek() == 1.
-      // The function is: if (startDate.isEmpty) return 1;
-      // This is a smoke test that just confirms the helper is exposed.
-      expect(true, isTrue);
-    });
+  AppState state() => AppState(Api(Dio()));
 
-    test('phaseForWeek maps to the right phase', () {
-      expect(phaseForWeek(1).name, contains('Foundation'));
-      expect(phaseForWeek(4).name, contains('Foundation'));
-      expect(phaseForWeek(5).name, contains('Development'));
-      expect(phaseForWeek(8).name, contains('Development'));
-      expect(phaseForWeek(9).name, contains('Push'));
-      expect(phaseForWeek(12).name, contains('Push'));
-    });
-
-    test('programEndDate is 12 weeks (84 days) after startDate', () {
-      // Logic: end = start + 12 weeks (84 days = 12 * 7)
-      // The helper is private, but the contract is tested via integration.
-      // Documented expected behavior:
-      //   startDate 2026-09-07 (Monday) -> endDate 2026-11-29 (Sunday)
-      //   startDate 2026-09-01          -> endDate 2026-11-23
-      // Verified manually in production.
-      expect(true, isTrue);
-    });
+  test('program dates and phase labels reflect the actual state', () {
+    final s = state();
+    expect(s.currentWeek(), 1);
+    s.startDate = '2026-09-21';
+    expect(s.programEndDate(), '2026-12-13');
+    expect(phaseForWeek(1).name, contains('Learn'));
+    expect(phaseForWeek(5).name, contains('Build'));
+    expect(phaseForWeek(9).name, contains('Progress'));
   });
 
-  group('reminders (Sunday skip)', () {
-    test('scheduleWeekly uses DateTimeComponents.dayOfWeekAndTime', () {
-      // The implementation uses:
-      //   matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime
-      // This is verified by code inspection. The behavioral test is:
-      //   * Schedule at 17:00 today
-      //   * Confirm only one notification per weekday is created
-      //   * Confirm no Sunday notification is created
-      // The full test requires a real Android device or
-      // a flutter_local_notifications mock; documented in
-      // renovation.md §2.4.
-      expect(true, isTrue);
-    });
+  test('heatmap distinguishes kegel-only from all three activities', () {
+    final s = state();
+    const date = '2026-09-28';
+    const other = '2026-09-29';
+    s.kegelLogs.add(const KegelEntry(1, date, 1, 3));
+    s.kegelLogs.add(const KegelEntry(2, other, 1, 3));
+    s.workouts.add(
+      WorkoutLog(
+        date: date,
+        exercise: 'goblet-squat',
+        sets: const [WorkoutSet(1, 10, 10)],
+      ),
+    );
+    s.checkins.add(const CheckinEntry(date, 4, 8, 2, null, null));
+    expect(s.heatmapCells()[date], 4);
+    expect(s.heatmapCells()[other], 1);
   });
 
-  group('heatmap intensity', () {
-    test('workout+checkin+kegel same day = 7', () {
-      // The heatmapCells() helper combines bits:
-      //   workout   -> 2
-      //   checkin   -> 1
-      //   kegel     -> 4
-      //   2 | 1 | 4 = 7
-      // This is a pure computation; verified by code inspection.
-      const workout = 2;
-      const checkin = 1;
-      const kegel = 4;
-      expect(workout | checkin | kegel, 7);
-    });
-
-    test('workout only = 2', () {
-      const workout = 2;
-      expect(workout, 2);
-    });
-
-    test('checkin only = 1', () {
-      const checkin = 1;
-      expect(checkin, 1);
-    });
-
-    test('kegel only = 4', () {
-      const kegel = 4;
-      expect(kegel, 4);
-    });
-
-    test('workout+checkin (no kegel) = 3', () {
-      const workout = 2;
-      const checkin = 1;
-      expect(workout | checkin, 3);
-    });
+  test('one lift or recovery activity is not a completed strength session', () {
+    final s = state();
+    final monday = DateTime(2026, 9, 28);
+    s.workouts.add(
+      WorkoutLog(
+        date: '2026-09-28',
+        exercise: 'recovery-walk',
+        sets: const [WorkoutSet(1, 0, 1)],
+      ),
+    );
+    s.workouts.add(
+      WorkoutLog(
+        date: '2026-09-28',
+        exercise: 'goblet-squat',
+        sets: const [WorkoutSet(1, 10, 10)],
+      ),
+    );
+    expect(s.strengthSessionCompleted(monday), isFalse);
+    for (final id in ['dumbbell-bench-press', 'lat-pulldown']) {
+      s.workouts.add(
+        WorkoutLog(
+          date: '2026-09-28',
+          exercise: id,
+          sets: const [WorkoutSet(1, 10, 10)],
+        ),
+      );
+    }
+    expect(s.strengthSessionCompleted(monday), isTrue);
+    expect(s.strengthSessionCompleted(DateTime(2026, 9, 29)), isFalse);
   });
 
-  group('bestStreak (Sunday gap handling)', () {
-    test('Sun skipped does not reset the streak', () {
-      // streak() in app_state:
-      //   for i in 0..120:
-      //     if sunday: skip, decrement d
-      //     if no logs: break
-      //     if logs: streak++, decrement d
-      // So a week Mon-Tue-Wed (3 days) -> streak = 3, NOT 4.
-      // Verified by code inspection. Manual: workout Mon, Tue, Wed
-      // (no Thursday) -> streak resets at Thursday.
-      expect(true, isTrue);
-    });
+  test('carry time is not included in kg x repetitions volume', () {
+    final s = state();
+    const date = '2026-09-28';
+    s.workouts.add(
+      WorkoutLog(
+        date: date,
+        exercise: 'farmers-walk',
+        sets: const [WorkoutSet(1, 20, 30)],
+      ),
+    );
+    s.workouts.add(
+      WorkoutLog(
+        date: date,
+        exercise: 'goblet-squat',
+        sets: const [WorkoutSet(1, 10, 8)],
+      ),
+    );
+    expect(s.volumeForDate(date), 80);
   });
 }

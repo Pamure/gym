@@ -1,17 +1,17 @@
 # 09 — Risks, Failure Modes & Safety Rules
 
-Fact: ~55% of exercise injuries occur in the first 3 months. Nearly all are preventable.
-This program's defenses, and what to watch for:
+Beginners deserve conservative progression and clear stop signals. No generic program can
+prevent every injury; this file lists practical risk-reduction habits and when to seek help.
 
 ## The Big 5 Beginner Killers
 
 1. **Ego lifting** — loading weight your form can't handle to not "look weak."
    Signs: half-reps, swinging/bouncing, back rounding, irritation when corrected.
-   Antidote: nobody in the gym is watching you; everyone was a beginner; the 68 kg guy lifting
-   40 kg perfectly gets respect, the guy quarter-squatting 140 kg gets memes. The app enforces
-   RIR targets — respect them.
+   Antidote: nobody in the gym is watching you; everyone was a beginner; a light, controlled
+   set is better training than a heavy, shortened rep. The app gives an RIR target as a rough
+   effort cue, not a test.
 2. **Too much, too soon** — tendons/ligaments adapt slower than muscles.
-   Antidote: ≤10% load increase per week; double-progression method (knowledge/01).
+   Antidote: use the smallest repeatable increase; follow the double-progression method (knowledge/01).
 3. **Skipping the warm-up** — cold tissue + load = strains.
    Antidote: RAMP checklist is the first screen of every workout in the app. Non-negotiable.
 4. **Skipping recovery** — muscle grows during rest, not training.

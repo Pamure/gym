@@ -1,131 +1,86 @@
-# 01 — The 12-Week Training Program (Complete)
+# Beginner training plan (canonical)
 
-Source principles: Jeff Nippard (Fundamentals Hypertrophy), Dr. Mike Israetel / Renaissance
-Periodization (volume landmarks, stimulus-to-fatigue), NSCA beginner guidelines.
-Adapted for: 68 kg male beginner, 5 days/week (Mon–Fri), 60 min sessions, gym closed Sunday.
+**Last reviewed: 20 September 2026 · Delhi/India context · app source: `app/lib/data/program.dart`**
 
----
+This plan is for a healthy adult beginner who has not yet shared a medical history. It is not a diagnosis or a substitute for an in-person coach. Chest pain, faintness, numbness, sudden weakness, or sharp/persistent pain means stop and seek appropriate medical care.
 
-## The Three Mesocycles
+## Why this replaces the first-week body-part split
 
-| Phase | Weeks | RIR target | Sets/exercise | Rep focus | What RIR means |
-|---|---|---|---|---|---|
-| 1 · Foundation | 1–4 | 3 | 3 | 10–12 | Stop with 3 good reps left in the tank |
-| 2 · Development | 5–8 | 2 | 3 | 8–10 | Stop with 2 good reps left |
-| 3 · Push | 9–12 | 1 | 3–4 | 6–8 | Stop with 1 good rep left (last set may hit failure on isolation only) |
+The coach's list is not automatically “wrong” or dangerous, but it gives a first-time lifter six dense body-part days with no clear progression, rest guidance, cardio or form workflow. A three-day full-body plan is a simpler default: every major movement is practised more than once per week, and missing one day does not erase a muscle group for the week. A split can work when weekly volume and frequency are equivalent; the label is less important than adherence, recoverable volume and good technique.
 
-**Never** go to failure on squat/bench/deadlift in months 1–2. Failure on the last set of curls,
-pushdowns, lateral raises is fine in month 3.
+The app preserves the original names for comparison: “Flate bench”, “Incline bench”, “Dicline bench”, “Flate dumble fly”, “Chest press machine”, “Pack deck fly”, “Dumble press”, “Side rase”, “Frnt rase”, “Revers”, “Shrugs”, “Lat pull”, “Behind lat pull”, “One arm machine”, “Seated”, “Close grip”, “Hyper extn”, “Barbell curl”, “Dumble curl”, “Cable curl”, “Pri chaire”, “Hammer”, “Single hand Dumble”, “Double hand Dumble”, “Pully push down”, “Dumble scul creashur”, “Roughf nd toughf”, “Squats”, “Leg press”, “Pron Leg curl”, “Leg extn”, “Calves”. The app's exercise cards provide a same-pattern alternative rather than asking a beginner to guess a machine.
 
-## Progression: Double Progression Method (memorize this)
+## Weekly schedule
 
-1. Choose a weight you can do for the LOW end of the rep range with perfect form.
-2. Every session, try to add 1 rep per set (same weight).
-3. When you hit the HIGH end of the range on ALL sets → add weight next session:
-   - Upper body: +2.5 kg · Lower body: +5 kg
-4. Drop back to the low end of the rep range. Repeat forever.
+| Day | Required? | Session |
+|---|---:|---|
+| Monday | Yes | Full Body A |
+| Tuesday | Optional | Easy walk/cycle + mobility |
+| Wednesday | Yes | Full Body B |
+| Thursday | Optional | Rest or easy walk + mobility |
+| Friday | Yes | Full Body C |
+| Saturday | Optional | Zone 2 walk/cycle, only if recovered |
+| Sunday | No | Full rest; gym closed |
 
-**Hard rule:** never increase more than ~10% total load per week. Tendons adapt slower than muscles.
+A beginner is successful at **three strength sessions per week**. Optional cardio is not a punishment and a missed day never earns an extra set.
 
-## Rest Periods
-- Compound lifts (squat, bench, deadlift, row, OHP): **2–3 min**
-- Isolation (curls, pushdowns, lateral raises, calves): **60–90 sec**
+### Full Body A — Monday
 
-## Deload Rule
-End of each month (week 4, 8) — if you feel beat up (poor sleep, elevated morning heart rate,
-motivation crash, joints achy): do the same exercises with **half the sets at 60% of the weight**.
-Week 12 is a peak week, then a full rest week before the next program.
+1. Goblet squat — 2–3 × 10–12
+2. Dumbbell bench press — 2–3 × 8–12
+3. Lat pulldown — 2–3 × 8–12
+4. Romanian deadlift — 2–3 × 8–12
+5. Dead bug — use the card's range
 
----
+### Full Body B — Wednesday
 
-## MONDAY — Upper Push (chest, shoulders, triceps)
+1. Leg press — 2–3 × 8–12
+2. Incline dumbbell press — 2–3 × 8–12
+3. Single-arm row — 2–3 × 8–12 per arm
+4. Dumbbell overhead press — 2–3 × 8–12
+5. Lying leg curl — 2–3 × 8–15
+6. Plank — 2–3 controlled holds
 
-| # | Exercise | M1 | M2 | M3 | Rest |
-|---|---|---|---|---|---|
-| 1 | Flat Barbell Bench Press | 3×10 | 3×8 | 4×6 | 2–3 min |
-| 2 | Standing Overhead Press | 3×10 | 3×8 | 4×6 | 2–3 min |
-| 3 | Incline Dumbbell Press (30–45°) | 3×12 | 3×10 | 3×8 | 90 s |
-| 4 | Tricep Rope Pushdown | 3×15 | 3×12 | 3×10 | 60–90 s |
-| 5 | Dumbbell Lateral Raise | 3×15 | 3×12 | 3×12 | 60–90 s |
+### Full Body C — Friday
 
-Month-1 note: if barbell bench feels unstable, use the Smith machine or dumbbells for weeks 1–2,
-then switch to barbell. Start with the empty 20 kg bar (or 15 kg if available) — nobody cares, and
-anyone who does is not paying your membership.
+1. Goblet squat — 2–3 × 10–12
+2. Barbell bench press — 2–3 × 8–12
+3. Single-arm row — 2–3 × 8–12 per arm
+4. Lying leg curl — 2–3 × 8–15
+5. Face pull — 2–3 × 12–15
+6. Farmer walk — 2–3 controlled carries
 
-## TUESDAY — Lower Body
+## Session flow
 
-| # | Exercise | M1 | M2 | M3 | Rest |
-|---|---|---|---|---|---|
-| 1 | Barbell Back Squat | 3×10 | 3×8 | 4×6 | 2–3 min |
-| 2 | Romanian Deadlift | 3×10 | 3×8 | 3×8 | 2–3 min |
-| 3 | Leg Press | 3×12 | 3×10 | 3×8 | 90 s |
-| 4 | Lying Leg Curl | 3×12 | 3×10 | 3×10 | 60–90 s |
-| 5 | Standing Calf Raise | 3×15 | 3×15 | 4×12 | 60 s |
+1. **Arrive and orient (1 minute):** open today's card; identify the machine/dumbbell/bench before loading it.
+2. **Warm up (5–8 minutes):** easy walk/cycle, joint circles, a few unloaded practice reps.
+3. **Ramp the first lift:** two or three lighter practice sets; do not count them as work sets.
+4. **Work top to bottom:** read the GIF/video, setup, one cue and “never do this” list. Ask the coach to check one light set.
+5. **Rest enough:** normally 2–3 minutes for squat/press/row/hinge; 1–2 minutes for smaller movements. Start the next set only when breathing and form are ready.
+6. **Log immediately:** weight and reps. Blank or invalid sets cannot be saved.
+7. **Finish:** 3–5 minutes easy walking and leave with energy for the next session.
 
-Month-1 note: weeks 1–2, replace back squat with **Goblet Squat** to learn the pattern safely.
-Add the barbell from week 3 (empty bar first). Knee sleeves optional; squat shoes unnecessary.
+## Progression
 
-## WEDNESDAY — Pull / Back (posture-protection day)
+- Weeks 1–4: 1–3 reps in reserve (RIR); learn the exact path and range.
+- Weeks 5–8: about 2 RIR; build reps before load.
+- Weeks 9–12: about 1–2 RIR; still no max testing and no failure on big lifts.
+- Choose the lightest load that allows the lower end of the range with repeatable form.
+- When all work sets reach the top of the range without form breakdown, add the smallest available load and return to the lower end.
+- If sleep, joints or motivation deteriorate for several sessions, reduce sets or take an extra rest day. Do not “make up” missed sessions.
 
-| # | Exercise | M1 | M2 | M3 | Rest |
-|---|---|---|---|---|---|
-| 1 | Conventional Deadlift | 3×8 | 3×6 | 4×5 | 3 min |
-| 2 | Barbell Bent-Over Row | 3×10 | 3×8 | 3×8 | 2–3 min |
-| 3 | Lat Pulldown (wide grip) | 3×12 | 3×10 | 3×8 | 90 s |
-| 4 | Cable Face Pull | 3×15 | 3×15 | 3×12 | 60–90 s |
-| 5 | Dumbbell Bicep Curl | 3×12 | 3×10 | 3×10 | 60–90 s |
+## Cardio, mobility and pelvic floor
 
-Why face pulls every week: they train rear delts + rotator cuff — the muscles that stop your
-shoulders rounding forward. This is the anti-"gym bro hunch" insurance. Month 1 deadlift: start
-with 40–60 kg, perfect the hip hinge; if lower back rounds, reduce weight immediately.
+Start optional cardio at 15–30 minutes at a pace where full sentences are possible. Build gradually toward public-health activity targets if recovery is good; the target is not a day-one requirement. Mobility can be gentle and pain-free after training or on optional days.
 
-## THURSDAY — Core + Mobility + Kegels (~45 min)
+Pelvic-floor practice is optional and should be gentle. Never repeatedly stop urine to train it. Do not squeeze abs, glutes or thighs, and stop if pelvic pain, urgency or tightness appears. A pelvic-floor physiotherapist is the right source for persistent symptoms.
 
-| # | Exercise | M1 | M2 | M3 |
-|---|---|---|---|---|
-| 1 | Front Plank | 3×20 s | 3×30 s | 3×45 s |
-| 2 | Dead Bug | 3×8/side | 3×10/side | 3×12/side |
-| 3 | Bird Dog | 3×8/side | 3×10/side | 3×12/side |
-| 4 | Kegel routine (see knowledge/05) | 3×10, 3 s holds | 3×10, 5 s holds | 3×10, 8 s holds |
-| 5 | Mobility circuit (see knowledge/06): hip flexor lunge, doorframe chest stretch, cat-cow, thread-the-needle, world's greatest stretch, neck tilts | 1 round | 1 round | 2 rounds |
+## Evidence used
 
-Core day is deliberately low-intensity: it trains deep stabilizers (protects your spine on heavy
-days) and posture without adding systemic fatigue.
+- ACSM, *Resistance Training Prescription for Muscle Function, Hypertrophy, and Physical Performance in Healthy Adults* (2026): https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/
+- Split vs full-body systematic review/meta-analysis (2024): https://pubmed.ncbi.nlm.nih.gov/38595233/
+- Failure vs non-failure systematic review: https://pmc.ncbi.nlm.nih.gov/articles/PMC9068575/
+- Rest-interval systematic review (2024): https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/fspor.2024.1429789/full
+- WHO physical activity guidance: https://www.who.int/publications/i/item/9789240015128
 
-## FRIDAY — Full Body Compounds
-
-| # | Exercise | M1 | M2 | M3 | Rest |
-|---|---|---|---|---|---|
-| 1 | Goblet Squat (M1) → Front Squat (M2–3) | 3×12 | 3×8 | 4×6 | 2–3 min |
-| 2 | Dumbbell Bench Press | 3×12 | 3×10 | 3×8 | 2 min |
-| 3 | Single-Arm Dumbbell Row | 3×10/arm | 3×8/arm | 3×8/arm | 90 s |
-| 4 | Dumbbell Overhead Press | 3×10 | 3×8 | 3×8 | 90 s |
-| 5 | Farmer's Walk | 3×30 s | 3×40 s | 3×50 s | 90 s |
-
-Farmer's walk: grip + traps + core + conditioning in one move. Pick dumbbells you can hold
-30 s with shoulders DOWN and back.
-
-## SATURDAY — Active Recovery (home or gym, ~30 min)
-- 20 min light cardio: brisk walk / cycle / treadmill at "can hold a conversation" pace
-- Foam roll 1 min each: quads, hamstrings, glutes, upper back, lats
-- Static stretches 30 s each: hamstrings, hip flexors, chest doorway, shoulders, calves
-- Optional: 1 kegel set
-- This day exists to speed recovery and build the flexibility you asked for. It is NOT optional cardio to skip.
-
-## SUNDAY — REST. Gym is closed. Sleep 8 h. Eat well. Do nothing.
-
----
-
-## Weekly volume check (why you won't develop weird imbalances)
-- Push sets/week: ~21 (Mon 15 + Fri 6) · Pull sets/week: ~21 (Wed 15 + Fri 6) → **1:1 ratio** ✓
-- Legs get a full dedicated day + squat on Friday → no chicken legs ✓
-- Rear delts (face pulls) + rows every week → shoulders stay back, posture improves ✓
-- Direct arm work both days (pushdowns Mon, curls Wed) → arms grow ✓
-- Core 1×/week direct + bracing in every compound → love handles handled by diet (see 04) ✓
-
-## Session flow template (every day)
-1. RAMP warm-up — 5–8 min (knowledge/06 §2)
-2. Main lift warm-up sets: 50% × 5 reps, 70% × 3 reps, then work sets
-3. Exercises in listed order (heaviest/most technical first)
-4. Log every set in the app immediately
-5. 3–5 min easy walk + the day's listed stretches
+These sources support a range of effective prescriptions; they do not prove one perfect routine for every person. The app therefore favours a conservative, adjustable starting point.

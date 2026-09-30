@@ -59,6 +59,16 @@ CREATE TABLE IF NOT EXISTS kegel_logs (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Persistent command receipts survive edits and retain a tombstone after deletion.
+-- This additive table also upgrades existing databases without altering logged rows.
+CREATE TABLE IF NOT EXISTS kegel_requests (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  kegel_id INTEGER UNIQUE REFERENCES kegel_logs(id) ON DELETE SET NULL,
+  PRIMARY KEY (user_id, client_id)
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   key TEXT NOT NULL,

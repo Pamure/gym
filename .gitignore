@@ -12,11 +12,16 @@ app/android/local.properties
 app/ios/Pods/
 app/ios/.symlinks/
 
-# Secrets
+# Secrets and runtime state (never commit account DBs, WAL, bootstrap, or builds)
 .env
 .env.local
 server/.env
-__omp_shell(".env.example")
+server/data/
+server/downloads/*.apk
+# Local build drops and private screenshot evidence
+/app-release.apk
+/WhatsApp Image *.jpeg
+/omnirush-account.json
 
 # Python tooling
 .venv/

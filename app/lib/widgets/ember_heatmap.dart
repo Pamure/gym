@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme.dart';
 
 /// GitHub-style consistency heatmap, single-hue ember ramp.
@@ -25,50 +26,59 @@ class EmberHeatmap extends StatelessWidget {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
     // Start on the Monday `weeks-1` weeks before this week's Monday.
-    final thisMonday = todayOnly.subtract(Duration(days: todayOnly.weekday - 1));
+    final thisMonday = todayOnly.subtract(
+      Duration(days: todayOnly.weekday - 1),
+    );
     final start = thisMonday.subtract(Duration(days: 7 * (weeks - 1)));
 
-    return LayoutBuilder(builder: (context, c) {
-      const rows = 7;
-      const gap = 3.0;
-      final cell = ((c.maxWidth - gap * (weeks - 1)) / weeks).floorToDouble();
-      final size = cell.clamp(6.0, 18.0);
-      return SizedBox(
-        height: rows * size + gap * (rows - 1),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(weeks, (w) {
-            final colStart = start.add(Duration(days: w * 7));
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(rows, (r) {
-                final day = colStart.add(Duration(days: r));
-                final future = day.isAfter(todayOnly);
-                final v = future ? -1 : (cells[_iso(day)] ?? 0);
-                final isToday = day == todayOnly;
-                return Container(
-                  width: size,
-                  height: size,
-                  margin: EdgeInsets.only(
-                      bottom: r == rows - 1 ? 0 : gap, right: w == weeks - 1 ? 0 : gap),
-                  decoration: BoxDecoration(
-                    color: future
-                        ? Colors.transparent
-                        : T.streakRamp[v.clamp(0, 4)],
-                    borderRadius: BorderRadius.circular(size * 0.22),
-                    border: isToday
-                        ? Border.all(color: T.ember, width: 1.2)
-                        : future
-                            ? Border.all(color: T.border.withValues(alpha: 0.4), width: 0.5)
-                            : null,
-                  ),
-                );
-              }),
-            );
-          }),
-        ),
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        const rows = 7;
+        const gap = 3.0;
+        final cell = ((c.maxWidth - gap * (weeks - 1)) / weeks).floorToDouble();
+        final size = cell.clamp(6.0, 18.0);
+        return SizedBox(
+          height: rows * size + gap * (rows - 1),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(weeks, (w) {
+              final colStart = start.add(Duration(days: w * 7));
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(rows, (r) {
+                  final day = colStart.add(Duration(days: r));
+                  final future = day.isAfter(todayOnly);
+                  final v = future ? -1 : (cells[_iso(day)] ?? 0);
+                  final isToday = day == todayOnly;
+                  return Container(
+                    width: size,
+                    height: size,
+                    margin: EdgeInsets.only(
+                      bottom: r == rows - 1 ? 0 : gap,
+                      right: w == weeks - 1 ? 0 : gap,
+                    ),
+                    decoration: BoxDecoration(
+                      color: future
+                          ? Colors.transparent
+                          : T.streakRamp[v.clamp(0, 4)],
+                      borderRadius: BorderRadius.circular(size * 0.22),
+                      border: isToday
+                          ? Border.all(color: T.ember, width: 1.2)
+                          : future
+                          ? Border.all(
+                              color: T.border.withValues(alpha: 0.4),
+                              width: 0.5,
+                            )
+                          : null,
+                    ),
+                  );
+                }),
+              );
+            }),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -78,7 +88,11 @@ class EmberHeatmap extends StatelessWidget {
 class StreakHero extends StatelessWidget {
   final int streakDays;
   final int bestStreak;
-  const StreakHero({super.key, required this.streakDays, required this.bestStreak});
+  const StreakHero({
+    super.key,
+    required this.streakDays,
+    required this.bestStreak,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +122,7 @@ class StreakHero extends StatelessWidget {
                         Colors.transparent,
                       ]
                     : [T.surface3.withValues(alpha: 0.5), Colors.transparent],
-                stops: const [0.0, 0.55, 1.0],
+                stops: active ? const [0.0, 0.55, 1.0] : const [0.0, 1.0],
               ),
             ),
             child: Center(
@@ -130,22 +144,25 @@ class StreakHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  active ? 'day streak' : 'no streak yet',
+                  active ? 'strength-session streak' : 'no streak yet',
                   style: TextStyle(
-                      color: active ? T.text : T.dim,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600),
+                    color: active ? T.text : T.dim,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   active
-                      ? 'Keep it burning. Best: $bestStreak days.'
-                      : 'Train today to light the first ember.',
-                  style: const TextStyle(color: T.dim, fontSize: 12.5, height: 1.4),
+                      ? 'Required sessions in a row. Best: $bestStreak sessions.'
+                      : 'Log a full strength session to start a streak.',
+                  style: const TextStyle(
+                    color: T.dim,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                // Mini heat bar — last 7 days
-                _WeekStrip(cells: _last7()),
               ],
             ),
           ),
@@ -153,13 +170,4 @@ class StreakHero extends StatelessWidget {
       ),
     );
   }
-
-  Map<String, int> _last7() => const {};
-}
-
-class _WeekStrip extends StatelessWidget {
-  final Map<String, int> cells;
-  const _WeekStrip({required this.cells});
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
 }

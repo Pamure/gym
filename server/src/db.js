@@ -1,3 +1,4 @@
+import './load-env.js';
 import Database from 'better-sqlite3';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';

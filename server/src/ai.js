@@ -2,45 +2,64 @@ import db from './db.js';
 
 const API_KEY = process.env.OPENROUTER_API_KEY || '';
 const BASE = 'https://openrouter.ai/api/v1/chat/completions';
-// Preferred model(s): tried in order. First entry may enable web search via the
-// ':online' suffix; on provider/quota errors we fall back through the list.
-const MODELS = () => {
-  const base = process.env.OPENROUTER_MODEL || 'minimax/minimax-m3:free';
-  const list = [base];
-  if (process.env.AI_SEARCH !== '0') list.unshift(`${base}:online`);
-  return list;
-};
+// Only explicitly free variants are permitted. The previously configured
+// Minimax free variant is no longer listed by OpenRouter; leave the remote
+// secret-bearing .env untouched and migrate that stale override at runtime.
+// Both NVIDIA variants were verified against the configured key on 2026-09-30:
+// Super responded in ~3–5 seconds; Ultra is the slower capacity fallback.
+const FREE_PRIMARY = 'nvidia/nemotron-3-super-120b-a12b:free';
+const FREE_FALLBACK = 'nvidia/nemotron-3-ultra-550b-a55b:free';
+const RETIRED_MODEL = 'minimax/minimax-m3:free';
+export function selectModels(env = process.env) {
+  const configured = env.OPENROUTER_MODEL;
+  const primary = configured?.endsWith(':free') && configured !== RETIRED_MODEL
+    ? configured : FREE_PRIMARY;
+  // Never append ':online': that variant has not been verified as free.
+  return [...new Set([primary, FREE_FALLBACK])];
+}
+const MODELS = () => selectModels();
 
-const SYSTEM_PROMPT = `You are IronCoach, a science-based personal trainer built into the user's own IronForge app.
-The user: 68kg male beginner (18-22, under 5'7"), Delhi (Okhla Vihar area reference), India. Gym: UFC-style facility (Punjabi Bagh reference), CLOSED SUNDAY. Non-vegetarian. Program start: 21 September 2026 (Monday). Budget: ~200 INR/day (Okhla Vihar market pricing). Experience: 5-10 home pushups only; complete beginner.
-Goals (priority): stamina > aesthetic/posture > strength/muscles > core > flexibility > kegels/sexual health. Must include all: compound lifts, Zone 2 cardio, dead bugs/plank/posture, pelvic floor (kegels) with isolation, flexibility (World Greatest Stretch, couch stretch).
-Trainer split (BAD — exact misspellings preserved): "Flate bench", "Dicline bench", "Flate dumble fly", "Pack deck fly", "Dumble press", "Side rase", "Frnt rase", "Revers", "Shrugs", "Lat pull", "Behind lat pull", "One arm machine", "Close grip", "Hyper extn", "Barbell curl", "Dumble curl", "Cable curl", "Pri chaire curl" (preacher misspelled), "Hammer", "Single hand Dumble", "Double hand Dumble", "Pully push down", "Dumble scul creashur", "Roughf nd toughf", "Pron Leg curl", "Leg extn", "Calves". Errors: isolation-only (no compound full-body), no rest days (Mon-Sat only), no core/posture/stamina/flexibility/kegels.
-AI HYBRID routine (replaces bad split): Full-body 3x/week — A: Squat, Incline DB Press, Seated Cable Row, RDL, Plank→Down Dog. B: Lat Pulldown, Overhead DB Press, Bulgarian Split Squat, Leg Curl, Dead Bug. C: Trap Bar/Deadlift, Flat Bench, Single-Arm DB Row, Walking Lunge, Farmer Carry. Active recovery Tue/Thu: mobility + Zone 2 (10-15 min). Daily kegels: 3x endurance holds (5-10s) + 10 rapid pulses (1s on/off).
-Diet DB (500+ Indian foods, Delhi/UP prices): chicken breast (~150/500g), chicken leg, paneer (~80/200g), soybeans/chunks (~40/200g), milk (~30/500ml), toned milk (~25/500ml), eggs (~6/ea), mutton/goat (~500/kg), beef (~350/kg), rohu/katla (~200/kg), basa (~300/kg), spinach (~20/500g), peas (~40/250g), masoor/moong/arhar (~60/500g), oats (~70/500g), roti (~30/500g flour), rice (~40/kg), curd (~30/500ml), ghee (~400/500ml). Per 100g: protein/carbs/fat/calories tracked. Budget calculator: given 200 INR, output meals with grams + INR/item + total ≤ budget.
-Locked rules:
-- Ground ALL answers in user snapshot (workouts/weight/checkins/settings). Never invent dates/weights.
-- Short (≤150 words), direct, warm. End with ONE concrete action today.
-- Progressive overload = driver. Form before weight. Month 1: 3 RIR; Month 2: 2 RIR; Month 3: 1 RIR.
-- If web/news info asked: say not verified online, answer from training/diet knowledge only.
-- Never give medical advice (sharp/persistent pain → doctor/physio).
-- Diet answers: ONLY Indian DB. Give grams + INR/item. Verify budget ≤ 200.
-- If miss 6-day target: remind punishment mechanism (extra set / streak reset) without shaming.
-- Program: 12 weeks, 21 Sep 2026 → 29 Nov 2026.`;
+const SYSTEM_PROMPT = `You are IronCoach, the calm beginner coach inside IronForge.
+Canonical user context: complete resistance-training beginner in Delhi, India; UFC-style gym; Sunday rest/closure. The user's own program start/end dates come from the current settings snapshot, not a hardcoded calendar. Do not invent age, height, weight, injuries, diet preferences or gym equipment. Use the user's logged data below when it exists.
+
+CANONICAL PROGRAM SHOWN IN THE APP:
+- Monday: Full Body A — goblet squat, dumbbell bench, lat pulldown, Romanian deadlift, dead bug.
+- Wednesday: Full Body B — leg press, incline dumbbell press, single-arm row, dumbbell overhead press, lying leg curl, plank.
+- Friday: Full Body C — goblet squat, bench press, single-arm row, lying leg curl, face pull, farmer walk.
+- Tuesday/Thursday/Saturday: optional conversational-pace cardio and mobility. Sunday: full rest.
+- Weeks 1-4: about 3 RIR and light technique practice; weeks 5-8: 2 RIR; weeks 9-12: 1-2 RIR. Start with 2 work sets, build toward 3 only when recovery and form are good. Most sets use 6-15 controlled reps. Rest about 2-3 minutes for demanding compounds and 1-2 minutes for smaller movements; rest longer if technique would otherwise fail.
+- Progress by adding reps within the range first, then the smallest available load. Never prescribe max testing or failure on a big lift.
+
+The trainer's original Mon-Sat body-part list is a starting point, not a moral failure. Explain that a six-day isolation split is unnecessarily complex for this first block, not that it is inherently useless. Preserve the exact names only when the user asks to compare them: Flate bench, Incline bench, Dicline bench, Flate dumble fly, Chest press machine, Pack deck fly, Dumble press, Side rase, Frnt rase, Revers, Shrugs, Lat pull, Behind lat pull, One arm machine, Seated, Close grip, Hyper extn, Barbell curl, Dumble curl, Cable curl, Pri chaire, Hammer, Single hand Dumble, Double hand Dumble, Pully push down, Dumble scul creashur, Roughf nd toughf, Squats, Leg press, Pron Leg curl, Leg extn, Calves. Never recommend behind-the-neck pulldowns or presses.
+
+COACHING RULES:
+- Keep answers short, practical and non-shaming. End with one concrete next action.
+- Teach what the machine looks like, one setup cue, one breathing/form cue and a same-pattern alternative. Tell the user to ask their gym coach for a light demonstration when unsure.
+- Warm up 5-8 minutes, use controlled reps, and leave 2-3 good reps in reserve by default. Sharp pain, chest pain, faintness, numbness or persistent pain means stop and seek a qualified clinician; do not diagnose.
+- Cardio is optional at first and can build gradually toward public-health targets; it should not make strength sessions or recovery worse.
+- Do not use guilt, punishment, forced extra sets or a six-day attendance target. Missing a session means resume the next planned session.
+- Nutrition values and Delhi prices are approximate planning data, not medical prescriptions. Do not promise a fixed calorie target or protein result; ask for relevant details before personalizing.
+- If asked for current research or web links, say what is verified and cite a reputable source rather than pretending to browse.
+- The program lasts 12 weeks. Compute its inclusive end date from the user's saved start date; if not set, ask rather than inventing it.`;
 
 
 
-function weekOf(startIso, now = new Date()) {
-  if (!startIso) return null;
-  const start = new Date(startIso + 'T00:00:00');
-  const days = Math.floor((now - start) / 86400000);
-  const w = Math.floor(days / 7) + 1;
-  return w >= 1 && w <= 12 ? w : (w > 12 ? 12 : 1);
+function weekOf(startIso, todayIso) {
+  if (!startIso || !todayIso) return null;
+  const days = Math.round((Date.parse(`${todayIso}T00:00:00Z`) -
+    Date.parse(`${startIso}T00:00:00Z`)) / 86400000);
+  return Number.isFinite(days) && days >= 0 && days < 84 ? Math.floor(days / 7) + 1 : null;
 }
 
-function buildContext(userId) {
+export function buildContext(userId, now = new Date()) {
   const uid = userId;
-  const iso = (d) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const delhiDate = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  const iso = (d) => {
+    const parts = Object.fromEntries(delhiDate.formatToParts(d).map((p) => [p.type, p.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  };
 
   const logs = db.prepare(
     `SELECT date, week, day, exercise, set_number AS setNumber, weight_kg AS weightKg, reps
@@ -61,7 +80,7 @@ function buildContext(userId) {
   const weightTrend = weights.map((w) => `${w.date}: ${w.kg}kg`).join(', ') || 'none';
 
   const kegels = db.prepare('SELECT date, sets, hold_seconds AS hold FROM kegel_logs WHERE user_id = ? ORDER BY date DESC LIMIT 30').all(uid);
-  const kegelSummary = kegels.map((k) => `${k.date}: ${k.sets} sets x ${k.hold}s`).join('\n') || 'none yet';
+  const kegelSummary = kegels.map((k) => `${k.date}: ${k.sets} recorded holds/sets of ${k.hold}s`).join('\n') || 'none yet';
 
   const checkins = db.prepare('SELECT date, energy, sleep_hours AS sleep, water_l AS water, mood FROM checkins WHERE user_id = ? ORDER BY date DESC LIMIT 14').all(uid);
   const checkinSummary = checkins.map((c) => `${c.date} energy:${c.energy ?? '?'} sleep:${c.sleep ?? '?'}h water:${c.water ?? '?'}L mood:${c.mood ?? '-'}`).join('\n') || 'none yet';
@@ -69,23 +88,33 @@ function buildContext(userId) {
   const settingsRow = db.prepare(`SELECT key, value FROM settings WHERE user_id = ? AND key IN ('program_start_date','reminder_time','gym_time','wake_time')`).all(uid);
   const settings = Object.fromEntries(settingsRow.map((r) => [r.key, r.value]));
 
-  // attendance over last 21 days (Mon-Sat expected)
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  // Show recent activity without treating optional recovery days as required.
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const requiredStrengthDays = new Set([1, 3, 5]); // JS: Mon/Wed/Fri
   const hasLogDate = new Set(db.prepare('SELECT DISTINCT date FROM workout_logs WHERE user_id = ?').all(uid).map((r) => r.date));
   const att = [];
-  for (let i = 20; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000);
+  const todayDelhi = iso(now);
+  const startTime = Date.parse(`${settings.program_start_date}T00:00:00+05:30`);
+  const endDate = Number.isFinite(startTime)
+    ? iso(new Date(startTime + 83 * 86400000))
+    : null;
+  for (let i = 20; i >= 1; i--) { // today is not missed before the session ends
+    const d = new Date(now.getTime() - i * 86400000);
     const di = iso(d);
-    if (d.getDay() === 0) continue; // Sunday rest
-    att.push(`${di} ${dayNames[d.getDay() - 1]}: ${hasLogDate.has(di) ? 'trained' : 'missed'}`);
+    if (!endDate || di < settings.program_start_date || di > endDate) continue;
+    const jsDay = new Date(`${di}T12:00:00Z`).getUTCDay();
+    if (jsDay === 0) continue; // Sunday rest
+    const status = hasLogDate.has(di)
+      ? 'trained'
+      : (requiredStrengthDays.has(jsDay) ? 'required strength missed' : 'optional movement not logged');
+    att.push(`${di} ${dayNames[jsDay]}: ${status}`);
   }
 
   const ms = db.prepare('SELECT date, waist_cm AS waist, chest_cm AS chest, arm_cm AS arm FROM measurements WHERE user_id = ? ORDER BY date').all(uid);
   const msTrend = ms.map((m) => `${m.date} waist:${m.waist ?? '-'} chest:${m.chest ?? '-'} arm:${m.arm ?? '-'}`).join('\n') || 'none';
 
-  const now = new Date();
-  const recent7 = db.prepare('SELECT COUNT(DISTINCT date) n FROM workout_logs WHERE user_id = ? AND date >= ?').get(uid, iso(new Date(Date.now() - 6 * 86400000)));
-  const todayLogs = db.prepare('SELECT COUNT(*) n FROM workout_logs WHERE user_id = ? AND date = ?').get(uid, iso(now)).n;
+  const recent7 = db.prepare('SELECT COUNT(DISTINCT date) n FROM workout_logs WHERE user_id = ? AND date >= ?').get(uid, iso(new Date(now.getTime() - 6 * 86400000)));
+  const todayLogs = db.prepare('SELECT COUNT(*) n FROM workout_logs WHERE user_id = ? AND date = ?').get(uid, todayDelhi).n;
 
   const prs = db.prepare(
     `SELECT exercise, MAX(weight_kg) kg FROM workout_logs WHERE weight_kg > 0 AND user_id = ? GROUP BY exercise ORDER BY kg DESC LIMIT 5`
@@ -93,8 +122,9 @@ function buildContext(userId) {
 
   return {
     snapshot_date: iso(now),
-    week_of_program: weekOf(settings.program_start_date),
+    week_of_program: weekOf(settings.program_start_date, todayDelhi),
     program_start_date: settings.program_start_date || 'not set',
+    program_end_date: endDate || 'not set',
     settings,
     latest_body_weight: weights.length ? weights[weights.length - 1].kg : null,
     body_weight_history: weightTrend,
@@ -132,7 +162,10 @@ export async function askCoach(userId, userMessage, { dayPlan = '' } = {}) {
   ];
 
   let lastErr = null;
+  const deadline = Date.now() + 75000; // shorter than the app's 90s timeout
   for (const model of MODELS()) {
+    const remaining = deadline - Date.now();
+    if (remaining < 3000) break;
     try {
       const resp = await fetch(BASE, {
         method: 'POST',
@@ -143,7 +176,7 @@ export async function askCoach(userId, userMessage, { dayPlan = '' } = {}) {
           'X-Title': 'IronForge',
         },
         body: JSON.stringify({ model, messages, max_tokens: 800, temperature: 0.7 }),
-        signal: AbortSignal.timeout(90000),
+        signal: AbortSignal.timeout(Math.min(remaining, 35000)),
       });
       if (!resp.ok) {
         const e = await resp.json().catch(() => ({}));

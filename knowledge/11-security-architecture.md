@@ -1,92 +1,33 @@
-# 11 — Security Architecture (Nobody Gets In But You)
+# 11 — Security architecture and verification boundaries
 
-Threat model: the app is exposed to the internet through a Cloudflare Tunnel. Attackers =
-internet scanners, credential-stuffers, bots. Data = personal health/fitness data. Availability
-matters less than confidentiality. Single user = we can be maximally strict.
+This is the **local implementation**, not proof that the live domain is protected. The app handles private fitness records, pelvic-floor logs, optional AI conversations and password-protected accounts. Do not assume external Cloudflare Access, backups or Android distribution are configured without checking the actual host.
 
-## Defense in Depth — 6 layers
+## Edge and host
 
-### Layer 1 · Cloudflare Access (edge gate) — the most important one
-Even if the app had a zero-day, attackers never reach it:
-1. Cloudflare Zero Trust dashboard → Access → Applications → Add application.
-2. Domain: `gym.abba-s.dev` (confirmed hostname).
-3. Policy: **Allow** → Emails → your exact email only.
-4. Result: every visitor first hits Cloudflare's login (email OTP or your Google account).
-   Scanners/bots get a Cloudflare page, never your app. Brute force on your app login
-   becomes impossible from the internet.
-5. Optional: enable Cloudflare WAF rules — block non-IN countries if you never travel.
+- If Cloudflare Tunnel and **Access** have been explicitly configured for the public hostname, an Access policy can restrict who reaches the app. Verify the policy and its fail-closed behavior independently, including on mobile data. Merely having a tunnel does **not** enable Access.
+- Compose binds only `127.0.0.1:8420` on the host. This is not a substitute for host-firewall/SSH review. `deploy/harden.sh` checks SSH password-auth status and **warns**; it does not edit sshd settings or prove that password login is disabled.
+- Compose uses non-root user `10001`, a read-only root filesystem, dropped capabilities and a persistent writable `/data` volume. Consult `server/docker-compose.yml` for current resource/security options.
 
-### Layer 2 · No inbound ports
-- App container binds `127.0.0.1:8420` — loopback only. `docker compose` publishes nothing to 0.0.0.0.
-- Cloudflared connects OUTBOUND to Cloudflare; no router forwarding, no firewall holes.
-- SSH (port 22) stays as-is: key-based auth only. `harden.sh` enforces
-  `PasswordAuthentication no` if not already set.
+## Login and HTTP
 
-### Layer 3 · Application auth (single user)
-- One account: username `mjonir`. No registration endpoint exists at all.
-- Password stored as **argon2id** hash (memory-hard, the current best practice). Never plaintext.
-- **2FA removed 2026-09-05 (user request):** login is password-only (argon2id). Cloudflare Access at the edge remains the mandatory second gate — internet attackers never reach the login form. Re-add TOTP later by restoring the otplib flow if desired.
-- Session: 128-bit random ID, HttpOnly + Secure + SameSite=Strict cookie, 12 h expiry,
-  rotated on login. Server-side session table → instant revocation.
-- Login rate limit: 5 attempts/min/IP, exponential backoff, 15 min lockout after 10 failures.
-- Generic error messages ("invalid credentials") — never reveal which part failed.
+- The server uses Argon2id password hashes stored in SQLite. Login is password-only; there is no current TOTP feature or `totp_secret` column. The first-run provisioning variable (`BOOTSTRAP_PASSWORD_BASE64`, or legacy plaintext variable) remains a secret even when base64 encoded. Remove it **manually** from the server's `.env` after confirming the initial account; changing the login password does not scrub it.
+- Session IDs use 32 random bytes (256 bits) and an HttpOnly, Secure, SameSite=Strict cookie. They expire after **30 days**; logout and password changes revoke sessions in SQLite. `SESSION_SECRET` is not used by this server auth implementation.
+- Login limiting is a fixed 5-attempt/one-minute and 10-attempt/15-minute window keyed by Fastify's client IP, **not exponential backoff**. With `trustProxy:false` behind a tunnel, different visitors may share the proxy-peer rate bucket; verify edge limits and infrastructure behavior separately.
+- Fastify has security headers and a restrictive CSP with explicit external asset allowlists, schemas for mutation bodies, and parameterized SQL. Unknown JSON fields are rejected at the mutation routes. No security claim follows from unit tests alone; review actual reverse-proxy settings and live headers.
+- AI chat, if configured, sends selected fitness/log context and the message to OpenRouter. The owner controls the server-side key in an ignored, permission-restricted `.env`; never put it in the Flutter app, Git, logs or a public export. The provider may process transmitted records. Do not use AI chat for details you do not want sent outside the server.
 
-### Layer 4 · Container hardening (Dockerfile + compose)
-```yaml
-# docker-compose.yml key settings
-services:
-  ironforge:
-    build: .
-    user: "10001:10001"            # non-root
-    read_only: true                # immutable root fs
-    cap_drop: [ALL]
-    security_opt: [no-new-privileges:true]
-    pids_limit: 200
-    mem_limit: 512m
-    volumes:
-      - ironforge-data:/data       # ONLY writable path (SQLite lives here)
-    ports:
-      - "127.0.0.1:8420:8420"      # loopback only — never 0.0.0.0
-    restart: unless-stopped
-```
+## Recovery and secret inventory
 
-### Layer 5 · API & HTTP hardening
-- Security headers on every response: `Content-Security-Policy` (self + YouTube only),
-  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
-  `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
-- Strict JSON schema validation (ajv) on every request body — unknown fields rejected.
-- SQL: better-sqlite3 **prepared statements only** — injection is structurally impossible.
-- No eval, no dynamic require, no user-controlled paths (path-traversal-proof static serving).
-- APK download requires a valid session — no public link to leak.
-- CORS: same-origin only (API and web served from one origin → no CORS needed at all).
-
-### Layer 6 · Server hygiene (harden.sh)
-- UFW: default deny incoming; allow 22 (SSH) + existing services only. Nothing new opened.
-- unattended-upgrades enabled for security patches.
-- App runs as dockerized non-root; host user `gomango` untouched.
-- Secrets: `/home/gomango/ironforge/.env`, chmod 600, never in git, never in the Docker image
-  (mounted at runtime).
-
-## Secrets inventory (what must never leak)
-| Secret | Where it lives |
+| Material | Actual location / action |
 |---|---|
-| Admin password (argon2id hash) | server `.env` / generated at first boot |
-| Session secret (32 B random) | server `.env` |
-| TOTP secret | SQLite DB (encrypted at rest optional) |
-| Cloudflare tunnel token | YOUR cloudflared config (not our repo) |
-| APK signing keystore + passwords | local machine only + password manager backup |
+| User password hash, sessions, logged data and chat | SQLite under the persistent `/data` volume; protect snapshots too |
+| Initial account password | Server `.env` provisioner variable until manually removed |
+| Optional OpenRouter key | Server-side ignored `.env` only; rotate if exposed |
+| Cloudflare tunnel credentials | External host/Cloudflare configuration; not verified here |
+| Android release signing keystore | **Not configured**; release currently uses debug signing and is not distribution-ready |
 
-## Backup & recovery
-- Nightly cron on yarmuk: `sqlite3 /data/ironforge.db ".backup '/data/backups/ironforge-$(date +%F).db'"` — 14-day retention.
-- Weekly: `rsync yarmuk:~/ironforge/server/data/backups/ ~/f/gym/backups/` from your PC.
-- Worst case (server dies): reinstall = re-run deploy.sh + restore latest backup. ~15 min.
+- `deploy/harden.sh` can install a nightly container job running `node src/backup.js`. That helper awaits a SQLite snapshot, verifies it and retains up to 14 days of backups **inside `/data/backups` on the same named volume**. The job has not been run against the live host as part of the 30 September fixes. Check job execution, ownership, available space and **restore to a disposable database** before trusting it.
+- Same-volume backups do not survive volume/host loss. Export snapshots to independent access-controlled storage using the actual named volume, not the unrelated repository `server/data/backups` path. Securely store and periodically test an off-host copy. No untested “15-minute recovery” promise is made.
+- Runtime database/WAL/SHM/bootstrap files were previously tracked. Their removal from the Git index prevents future tracking but does not erase historical commits; assess distribution and rotate affected material separately with explicit authorization.
 
-## If compromise is ever suspected
-1. `docker compose down` on yarmuk (app offline instantly).
-2. Delete the Cloudflare Access app / tunnel route.
-3. Rotate: admin password, session secret, Cloudflare credentials, SSH keys.
-4. Review `docker logs ironforge` + Cloudflare Access audit logs (Access logs every auth event).
-
-## Explicitly out of scope (accepted trade-offs)
-- Cloudflare terminates TLS and can technically see traffic — accepted; standard for tunnels.
-- fail2ban not used: useless behind a tunnel (all IPs are Cloudflare's) — Access replaces it.
+If compromise is suspected: isolate the service, preserve evidence, revoke sessions/credentials, check Access and host logs, and restore only from a verified clean backup. Do not run host-hardening or deployment scripts as a diagnostic shortcut.

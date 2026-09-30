@@ -33,7 +33,7 @@ Your body lies to you — what a squat *feels* like and what it *looks* like are
 
 ### Layer 4 — The data check (weekly, in the app)
 - Weight or reps on main lifts trending **up over weeks** = it's working. Full stop.
-- Flat for 2+ weeks → in order, check: (1) sleep 7–9 h? (2) protein 110–140 g? (3) skipping
+- Flat for 2+ weeks → in order, check: (1) sleep and recovery? (2) regular meals with a protein source? (3) skipping
   sessions? (4) RIR honest? Only then change the program.
 - Sudden strength DROP + poor sleep + elevated morning heart rate = overreaching → deload (knowledge/09).
 

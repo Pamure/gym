@@ -17,7 +17,11 @@ async function bootstrap() {
   // Production: credentials injected via .env (BOOTSTRAP_USERNAME / BOOTSTRAP_PASSWORD).
   // Dev: optional bootstrap.json inside the data dir (gitignored, chmod 600).
   const envUser = process.env.BOOTSTRAP_USERNAME;
-  const envPass = process.env.BOOTSTRAP_PASSWORD;
+  // Deploy uses base64 solely for literal-safe Compose env serialization.
+  // Both forms are secrets and must remain server-side.
+  const envPass = process.env.BOOTSTRAP_PASSWORD || (process.env.BOOTSTRAP_PASSWORD_BASE64
+    ? Buffer.from(process.env.BOOTSTRAP_PASSWORD_BASE64, 'base64').toString('utf8')
+    : undefined);
   if (envUser && envPass) {
     if (envPass.length < 10) {
       throw new Error('BOOTSTRAP_PASSWORD must be at least 10 characters');
@@ -58,7 +62,7 @@ async function main() {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:; " +
       "frame-src https://www.youtube-nocookie.com https://www.youtube.com; " +
-      "connect-src 'self' https://www.gstatic.com https://fonts.gstatic.com; " +
+      "connect-src 'self' https://www.gstatic.com https://fonts.gstatic.com https://img.youtube.com; " +
       "worker-src 'self' blob:; media-src 'self'; " +
       "object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
     reply.header('X-Content-Type-Options', 'nosniff');
@@ -66,6 +70,14 @@ async function main() {
     reply.header('Referrer-Policy', 'no-referrer');
     reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     reply.header('Cross-Origin-Opener-Policy', 'same-origin');
+    // Flutter's index and service-worker bootstrap must not be stuck in a
+    // browser's old cache during local previews or normal upgrades.
+    if (req.url === '/' || req.url.startsWith('/index.html') ||
+        req.url.startsWith('/flutter_service_worker.js') ||
+        req.url.startsWith('/flutter_bootstrap.js') ||
+        req.url.startsWith('/main.dart.js')) {
+      reply.header('Cache-Control', 'no-store');
+    }
   });
 
   app.get('/api/health', async () => ({ ok: true }));

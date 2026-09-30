@@ -57,26 +57,29 @@ check "state-kegels" '1' "$(echo "$st" | jq '.kegels | length')"
 check "state-kegels-sets" '3' "$(echo "$st" | jq -r '.kegels[0].sets')"
 # 9. schema validation: garbage body → 400
 check "bad-body" '400' "$(curl -s -o /dev/null -w '%{http_code}' -b "$JAR" -X POST -H 'content-type: application/json' -d '{"date":"x","sets":[]}' "http://127.0.0.1:$PORT/api/logs/workout")"
-# 10. logout kills session
+# 10. setting validation rejects malformed reminder times
+check "bad-time-setting" '400' "$(curl -s -o /dev/null -w '%{http_code}' -b "$JAR" -X POST -H 'content-type: application/json' -d '{"key":"wake_time","value":"25:99"}' "http://127.0.0.1:$PORT/api/settings")"
+check "bad-units-setting" '400' "$(curl -s -o /dev/null -w '%{http_code}' -b "$JAR" -X POST -H 'content-type: application/json' -d '{"key":"units","value":"stones"}' "http://127.0.0.1:$PORT/api/settings")"
+# 11. logout kills session
 check "logout" '{"ok":true}' "$(curl -sf -b "$JAR" -c "$JAR" -X POST "http://127.0.0.1:$PORT/api/auth/logout")"
 check "state-after-logout" '401' "$(curl -s -o /dev/null -w '%{http_code}' -b "$JAR" "http://127.0.0.1:$PORT/api/state")"
-# 11. re-login then check-in upsert + delete
+# 12. re-login then check-in upsert + delete
 curl -sf -c "$JAR" -X POST -H 'content-type: application/json' -d '{"username":"smokeuser","password":"SmokeTest-Pass-123"}' "http://127.0.0.1:$PORT/api/auth/login" > /dev/null
 curl -sf -b "$JAR" -X POST -H 'content-type: application/json' -d '{"date":"2026-09-06","energy":4,"sleepHours":7.5,"waterL":3,"mood":"good"}' "http://127.0.0.1:$PORT/api/checkins" > /dev/null
 check "checkin-in-state" '4' "$(curl -sf -b "$JAR" http://127.0.0.1:$PORT/api/state | jq -r '.checkins[0].energy')"
-# 12. workout edit = same endpoint upsert (change set 1 to 25kg), then delete exercise
+# 13. workout edit = same endpoint upsert (change set 1 to 25kg), then delete exercise
 curl -sf -b "$JAR" -X POST -H 'content-type: application/json' -d '{"date":"2026-09-05","week":1,"day":"monday","exercise":"bench-press","sets":[{"setNumber":1,"weightKg":25,"reps":8},{"setNumber":2,"weightKg":20,"reps":10},{"setNumber":3,"weightKg":20,"reps":9}]}' "http://127.0.0.1:$PORT/api/logs/workout" > /dev/null
 check "workout-edited" '25' "$(curl -sf -b "$JAR" http://127.0.0.1:$PORT/api/state | jq -r '.workouts[0].sets[0].weightKg')"
 check "delete-workout" '{"ok":true,"deleted":3}' "$(curl -sf -b "$JAR" -X DELETE -H 'content-type: application/json' -d '{"date":"2026-09-05","exercise":"bench-press"}' "http://127.0.0.1:$PORT/api/logs/workout")"
-# 13. weight + measurements + kegel delete/edit
+# 14. weight + measurements + kegel delete/edit
 check "delete-weight" '{"ok":true,"deleted":1}' "$(curl -sf -b "$JAR" -X DELETE -H 'content-type: application/json' -d '{"date":"2026-09-05"}' "http://127.0.0.1:$PORT/api/logs/weight")"
 check "delete-measurements" '{"ok":true,"deleted":1}' "$(curl -sf -b "$JAR" -X DELETE -H 'content-type: application/json' -d '{"date":"2026-09-05"}' "http://127.0.0.1:$PORT/api/logs/measurements")"
 KGID=$(curl -sf -b "$JAR" http://127.0.0.1:$PORT/api/state | jq -r '.kegels[0].id')
 check "kegel-edit" '{"ok":true}' "$(curl -sf -b "$JAR" -X PUT -H 'content-type: application/json' -d "{\"id\":$KGID,\"sets\":5,\"holdSeconds\":8}" "http://127.0.0.1:$PORT/api/logs/kegels")"
 check "kegel-delete" '{"ok":true,"deleted":1}' "$(curl -sf -b "$JAR" -X DELETE -H 'content-type: application/json' -d "{\"id\":$KGID}" "http://127.0.0.1:$PORT/api/logs/kegels")"
-# 14. AI chat: empty message rejected (400) regardless of key presence
+# 15. AI chat: empty message rejected (400) regardless of key presence
 check "ai-empty-rejected" '400' "$(curl -s -o /dev/null -w '%{http_code}' -b "$JAR" -X POST -H 'content-type: application/json' -d '{"message":""}' "http://127.0.0.1:$PORT/api/ai/chat")"
-# 15. password change flow (old session invalidated, new password works)
+# 16. password change flow (old session invalidated, new password works)
 curl -sf -c "$JAR" -X POST -H 'content-type: application/json' -d '{"username":"smokeuser","password":"SmokeTest-Pass-123"}' "http://127.0.0.1:$PORT/api/auth/login" > /dev/null
 check "change-password" '{"ok":true}' "$(curl -sf -b "$JAR" -c "$JAR" -X POST -H 'content-type: application/json' -d '{"currentPassword":"SmokeTest-Pass-123","newPassword":"New-Pass-45678"}' "http://127.0.0.1:$PORT/api/auth/password")"
 check "old-password-dead" '401' "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{"username":"smokeuser","password":"SmokeTest-Pass-123"}' "http://127.0.0.1:$PORT/api/auth/login")"

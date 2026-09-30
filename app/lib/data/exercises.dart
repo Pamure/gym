@@ -9,7 +9,8 @@ class Exercise {
   final List<String> cues;
   final List<String> mistakes;
   final String? gif; // bundled asset key (assets/gifs/<key>.gif)
-  final String? videoId; // YouTube tutorial id (in-app play + external fallback)
+  final String?
+  videoId; // YouTube tutorial id (in-app play + external fallback)
 
   const Exercise({
     required this.id,
@@ -22,11 +23,11 @@ class Exercise {
   });
 
   String get gifAsset => gif == null ? '' : 'assets/gifs/$gif.gif';
-  String get youtubeUrl => videoId == null
-      ? ''
-      : 'https://www.youtube.com/watch?v=$videoId';
+  String get youtubeUrl =>
+      videoId == null ? '' : 'https://www.youtube.com/watch?v=$videoId';
   String get searchUrl => Uri.encodeFull(
-      'https://www.youtube.com/results?search_query=ironforge%20$name%20exercise');
+    'https://www.youtube.com/results?search_query=ironforge%20$name%20exercise',
+  );
 }
 
 const exercises = <String, Exercise>{
@@ -84,6 +85,70 @@ const exercises = <String, Exercise>{
     gif: 'incline-dumbbell-press',
     videoId: '8iPEnn-ltC8',
   ),
+  'decline-bench-press': Exercise(
+    id: 'decline-bench-press',
+    name: 'Decline Bench Press',
+    muscles: ['Lower Chest', 'Triceps'],
+    cues: [
+      'Ask the coach to set the bench and spotter arms',
+      'Feet planted and shoulder blades gently down',
+      'Lower under control; press without bouncing',
+    ],
+    mistakes: [
+      'Using a steep angle',
+      'Attempting a heavy set without a spotter',
+      'Letting the bar drift toward the neck',
+    ],
+    videoId: 'rT7DgCr-3pg',
+  ),
+  'dumbbell-fly': Exercise(
+    id: 'dumbbell-fly',
+    name: 'Flat Dumbbell Fly',
+    muscles: ['Chest'],
+    cues: [
+      'Use light dumbbells on a flat bench',
+      'Keep a soft elbow bend and open only to a comfortable stretch',
+      'Bring the hands together without crashing the weights',
+    ],
+    mistakes: [
+      'Using pressing weight',
+      'Dropping elbows below a comfortable shoulder range',
+      'Bouncing at the bottom',
+    ],
+    videoId: '8iPEnn-ltC8',
+  ),
+  'chest-press-machine': Exercise(
+    id: 'chest-press-machine',
+    name: 'Chest Press Machine',
+    muscles: ['Chest', 'Triceps'],
+    cues: [
+      'Set the seat so handles start around mid-chest',
+      'Keep back and head against the pad',
+      'Press smoothly and return without letting the stack crash',
+    ],
+    mistakes: [
+      'Seat too low or too high',
+      'Shoulders rolling forward',
+      'Locking elbows hard',
+    ],
+    videoId: 'rT7DgCr-3pg',
+  ),
+  'pec-deck-fly': Exercise(
+    id: 'pec-deck-fly',
+    name: 'Pec Deck Fly',
+    muscles: ['Chest'],
+    cues: [
+      'Set the seat so handles are around mid-chest',
+      'Keep a soft elbow bend',
+      'Bring the pads together slowly and return under control',
+    ],
+    mistakes: [
+      'Using momentum',
+      'Shoulders shrugging',
+      'Stretching beyond a pain-free range',
+    ],
+    videoId: 'rep-qVOkqgk',
+  ),
   'tricep-pushdown': Exercise(
     id: 'tricep-pushdown',
     name: 'Tricep Rope Pushdown',
@@ -100,6 +165,54 @@ const exercises = <String, Exercise>{
     ],
     gif: 'tricep-pushdown',
     videoId: '2-LAMcpzODU',
+  ),
+  'front-raise': Exercise(
+    id: 'front-raise',
+    name: 'Dumbbell Front Raise',
+    muscles: ['Front Delts'],
+    cues: [
+      'Use very light dumbbells',
+      'Raise to shoulder height with soft elbows',
+      'Lower slowly without swinging',
+    ],
+    mistakes: [
+      'Going above a comfortable range',
+      'Swinging the torso',
+      'Shrugging',
+    ],
+    videoId: 'OuG1smZTsQQ',
+  ),
+  'reverse-fly': Exercise(
+    id: 'reverse-fly',
+    name: 'Reverse Fly',
+    muscles: ['Rear Delts', 'Upper Back'],
+    cues: [
+      'Use a light machine or dumbbells',
+      'Keep neck relaxed and chest supported if possible',
+      'Move arms out, not by shrugging',
+    ],
+    mistakes: [
+      'Using heavy weights',
+      'Jerking the arms',
+      'Pinching through shoulder pain',
+    ],
+    videoId: 'rep-qVOkqgk',
+  ),
+  'dumbbell-shrug': Exercise(
+    id: 'dumbbell-shrug',
+    name: 'Dumbbell Shrug',
+    muscles: ['Traps'],
+    cues: [
+      'Stand tall with dumbbells by your sides',
+      'Lift shoulders straight up, not forward',
+      'Pause briefly and lower slowly',
+    ],
+    mistakes: [
+      'Rolling the shoulders',
+      'Bouncing',
+      'Using a load that changes posture',
+    ],
+    videoId: 'Fkzk_RqlYig',
   ),
   'lateral-raise': Exercise(
     id: 'lateral-raise',
@@ -127,10 +240,7 @@ const exercises = <String, Exercise>{
       'Dumbbells over mid-chest, slight inward press',
       'Control the descent 2-3s',
     ],
-    mistakes: [
-      'Dumbbells drifting apart',
-      'Clanking at the top to rest',
-    ],
+    mistakes: ['Dumbbells drifting apart', 'Clanking at the top to rest'],
     gif: 'dumbbell-bench-press',
     videoId: '8iPEnn-ltC8',
   ),
@@ -142,10 +252,7 @@ const exercises = <String, Exercise>{
       'Brace core and glutes like the barbell version',
       'Press from chin level to full lockout',
     ],
-    mistakes: [
-      'Lower back arching',
-      'Pressing forward instead of up',
-    ],
+    mistakes: ['Lower back arching', 'Pressing forward instead of up'],
     gif: 'dumbbell-shoulder-press',
     videoId: '_RlRDWO2jfg',
   ),
@@ -178,10 +285,7 @@ const exercises = <String, Exercise>{
       'Elbows track inside your knees',
       'Sit DEEP, chest proud',
     ],
-    mistakes: [
-      'Leaning forward',
-      'Shallow depth',
-    ],
+    mistakes: ['Leaning forward', 'Shallow depth'],
     gif: 'goblet-squat',
     videoId: 'gcNh17Ckjgg',
   ),
@@ -193,10 +297,7 @@ const exercises = <String, Exercise>{
       'Bar on front delts, elbows HIGH (parallel to floor)',
       'Torso upright — front squat punishes leaning',
     ],
-    mistakes: [
-      'Elbows dropping (bar rolls forward)',
-      'Leaning forward',
-    ],
+    mistakes: ['Elbows dropping (bar rolls forward)', 'Leaning forward'],
     gif: 'front-squat',
     videoId: 'gcNh17Ckjgg',
   ),
@@ -243,12 +344,25 @@ const exercises = <String, Exercise>{
       'Hips glued to the bench',
       'Full curl, slow 2-3s negative',
     ],
-    mistakes: [
-      'Hips rising to help',
-      'Swinging momentum',
-    ],
+    mistakes: ['Hips rising to help', 'Swinging momentum'],
     gif: 'lying-leg-curl',
     videoId: '1Tq3QdYUuHs',
+  ),
+  'leg-extension': Exercise(
+    id: 'leg-extension',
+    name: 'Leg Extension Machine',
+    muscles: ['Quads'],
+    cues: [
+      'Align your knee with the machine pivot',
+      'Pad rests above the ankle',
+      'Extend smoothly and lower under control',
+    ],
+    mistakes: [
+      'Seat misaligned',
+      'Kicking the weight',
+      'Locking the knee hard',
+    ],
+    videoId: 'JbyjNymZOt0',
   ),
   'standing-calf-raise': Exercise(
     id: 'standing-calf-raise',
@@ -259,10 +373,7 @@ const exercises = <String, Exercise>{
       'Explode up, 1s squeeze at top',
       'No bouncing',
     ],
-    mistakes: [
-      'Bouncing off the bottom',
-      'Half range of motion',
-    ],
+    mistakes: ['Bouncing off the bottom', 'Half range of motion'],
     gif: 'standing-calf-raise',
     videoId: 'JbyjNymZOt0',
   ),
@@ -321,6 +432,71 @@ const exercises = <String, Exercise>{
     gif: 'lat-pulldown',
     videoId: 'SALxEARYS2U',
   ),
+  'behind-lat-pulldown': Exercise(
+    id: 'behind-lat-pulldown',
+    name: 'Front Lat Pulldown (safe replacement)',
+    muscles: ['Lats', 'Biceps'],
+    cues: [
+      'Use the same machine with the bar in front of your face',
+      'Pull to the upper chest with elbows down',
+      'Ask the coach to adjust the thigh pad',
+    ],
+    mistakes: [
+      'Pulling behind the neck',
+      'Forcing a painful shoulder range',
+      'Leaning far back',
+    ],
+    gif: 'lat-pulldown',
+    videoId: 'SALxEARYS2U',
+  ),
+  'seated-cable-row': Exercise(
+    id: 'seated-cable-row',
+    name: 'Seated Cable Row',
+    muscles: ['Upper Back', 'Lats'],
+    cues: [
+      'Sit tall with knees softly bent',
+      'Pull the handle toward your lower ribs',
+      'Return slowly without rounding your back',
+    ],
+    mistakes: [
+      'Rocking the whole torso',
+      'Shrugging',
+      'Pulling behind the neck',
+    ],
+    videoId: 'FWJR5Ve8bnQ',
+  ),
+  'close-grip-lat-pulldown': Exercise(
+    id: 'close-grip-lat-pulldown',
+    name: 'Close-Grip Lat Pulldown',
+    muscles: ['Lats', 'Biceps'],
+    cues: [
+      'Use a neutral or close handle',
+      'Pull to the upper chest',
+      'Keep the ribs stacked and control the return',
+    ],
+    mistakes: [
+      'Behind-neck pulling',
+      'Swinging back',
+      'Shrugging into the top',
+    ],
+    videoId: 'SALxEARYS2U',
+  ),
+  'back-extension': Exercise(
+    id: 'back-extension',
+    name: 'Back Extension',
+    muscles: ['Glutes', 'Hamstrings', 'Back'],
+    cues: [
+      'Set the pad below the hip crease',
+      'Hinge from the hips with a neutral spine',
+      'Stop when the body is straight; squeeze glutes',
+    ],
+    mistakes: [
+      'Overextending at the top',
+      'Rounding under load',
+      'Using momentum',
+    ],
+    videoId: '_oyxCn2iSjU',
+  ),
   'face-pull': Exercise(
     id: 'face-pull',
     name: 'Cable Face Pull',
@@ -336,6 +512,66 @@ const exercises = <String, Exercise>{
     ],
     videoId: 'rep-qVOkqgk', // no bundled gif in dataset — video only
   ),
+  'barbell-curl': Exercise(
+    id: 'barbell-curl',
+    name: 'Barbell Curl',
+    muscles: ['Biceps'],
+    cues: [
+      'Stand tall with elbows close to the ribs',
+      'Curl without leaning back',
+      'Lower under control',
+    ],
+    mistakes: [
+      'Swinging the bar',
+      'Elbows drifting forward',
+      'Using a load that causes back lean',
+    ],
+    videoId: 'kwG2ipFRgFo',
+  ),
+  'cable-curl': Exercise(
+    id: 'cable-curl',
+    name: 'Cable Curl',
+    muscles: ['Biceps'],
+    cues: [
+      'Stand close enough to keep cable tension',
+      'Keep elbows near your sides',
+      'Return slowly to a full comfortable length',
+    ],
+    mistakes: [
+      'Leaning away from the stack',
+      'Shrugging',
+      'Letting the stack crash',
+    ],
+    videoId: 'kwG2ipFRgFo',
+  ),
+  'preacher-curl': Exercise(
+    id: 'preacher-curl',
+    name: 'Preacher Curl',
+    muscles: ['Biceps'],
+    cues: [
+      'Set the seat so the upper arms rest comfortably on the pad',
+      'Start light and avoid locking the elbows hard',
+      'Lower slowly',
+    ],
+    mistakes: [
+      'Shoulders lifting off the pad',
+      'Dropping into the bottom',
+      'Using a heavy load',
+    ],
+    videoId: 'kwG2ipFRgFo',
+  ),
+  'hammer-curl': Exercise(
+    id: 'hammer-curl',
+    name: 'Dumbbell Hammer Curl',
+    muscles: ['Biceps', 'Forearms'],
+    cues: [
+      'Keep palms facing each other',
+      'Elbows stay close to your sides',
+      'Lower slowly',
+    ],
+    mistakes: ['Swinging', 'Turning it into a shoulder raise', 'Shrugging'],
+    videoId: 'kwG2ipFRgFo',
+  ),
   'bicep-curl': Exercise(
     id: 'bicep-curl',
     name: 'Dumbbell Bicep Curl',
@@ -345,12 +581,69 @@ const exercises = <String, Exercise>{
       'Rotate palms up as you curl',
       '2-3s controlled negative',
     ],
-    mistakes: [
-      'Swinging the body',
-      'Elbows drifting forward',
-    ],
+    mistakes: ['Swinging the body', 'Elbows drifting forward'],
     gif: 'bicep-curl',
     videoId: 'kwG2ipFRgFo',
+  ),
+  'single-arm-triceps-extension': Exercise(
+    id: 'single-arm-triceps-extension',
+    name: 'Single-Arm Dumbbell Triceps Extension',
+    muscles: ['Triceps'],
+    cues: [
+      'Use a light dumbbell and brace the upper arm',
+      'Move mainly at the elbow',
+      'Stop before shoulder or elbow discomfort',
+    ],
+    mistakes: ['Flaring the elbow', 'Arching the back', 'Forcing the range'],
+    videoId: '2-LAMcpzODU',
+  ),
+  'dumbbell-overhead-triceps-extension': Exercise(
+    id: 'dumbbell-overhead-triceps-extension',
+    name: 'Two-Hand Dumbbell Overhead Extension',
+    muscles: ['Triceps'],
+    cues: [
+      'Use one light dumbbell held by both hands',
+      'Keep ribs down and elbows pointing forward',
+      'Lower only as far as shoulders allow',
+    ],
+    mistakes: [
+      'Flared elbows',
+      'Lower-back arching',
+      'Dropping the weight behind the head',
+    ],
+    videoId: '2-LAMcpzODU',
+  ),
+  'dumbbell-skull-crusher': Exercise(
+    id: 'dumbbell-skull-crusher',
+    name: 'Dumbbell Skull Crusher',
+    muscles: ['Triceps'],
+    cues: [
+      'Lie on a stable bench with light dumbbells',
+      'Keep upper arms mostly still',
+      'Lower beside the head and extend smoothly',
+    ],
+    mistakes: [
+      'Heavy weight near the face',
+      'Elbows drifting wide',
+      'Dropping quickly',
+    ],
+    videoId: '2-LAMcpzODU',
+  ),
+  'triceps-unclear': Exercise(
+    id: 'triceps-unclear',
+    name: 'Trainer movement — name needs confirmation',
+    muscles: ['Triceps'],
+    cues: [
+      'Ask the trainer to demonstrate and name this movement',
+      'Use a light pushdown only as a temporary placeholder',
+      'Do not guess with a heavy dumbbell',
+    ],
+    mistakes: [
+      'Copying a movement without knowing the setup',
+      'Using a heavy load',
+      'Working through elbow or shoulder pain',
+    ],
+    videoId: '2-LAMcpzODU',
   ),
   'single-arm-row': Exercise(
     id: 'single-arm-row',
@@ -361,10 +654,7 @@ const exercises = <String, Exercise>{
       'Pull the dumbbell to your hip',
       'Squeeze shoulder blade at the top',
     ],
-    mistakes: [
-      'Torso rotating to cheat the weight',
-      'Short range of motion',
-    ],
+    mistakes: ['Torso rotating to cheat the weight', 'Short range of motion'],
     gif: 'single-arm-row',
     videoId: 'FWJR5Ve8bnQ',
   ),
@@ -378,10 +668,7 @@ const exercises = <String, Exercise>{
       'Squeeze glutes, pull elbows toward toes',
       'Breathe steadily — never hold breath',
     ],
-    mistakes: [
-      'Hips sagging (lower back strain)',
-      'Hips piked up',
-    ],
+    mistakes: ['Hips sagging (lower back strain)', 'Hips piked up'],
     gif: 'plank',
     videoId: 'pSHjTRCQxIw',
   ),
@@ -410,11 +697,7 @@ const exercises = <String, Exercise>{
       'Hips stay LEVEL (glass of water on your back)',
       '2s hold each rep',
     ],
-    mistakes: [
-      'Hips rotating',
-      'Back arching',
-      'Speed-repping',
-    ],
+    mistakes: ['Hips rotating', 'Back arching', 'Speed-repping'],
     videoId: 'pSHjTRCQxIw', // no bundled gif — video + cues
   ),
   // ---------------- CONDITIONING ----------------
@@ -427,10 +710,7 @@ const exercises = <String, Exercise>{
       'Shoulders down and back, eyes forward',
       'Short controlled steps, keep breathing',
     ],
-    mistakes: [
-      'Leaning to one side',
-      'Shrugging shoulders to ears',
-    ],
+    mistakes: ['Leaning to one side', 'Shrugging shoulders to ears'],
     gif: 'farmers-walk',
     videoId: 'Fkzk_RqlYig',
   ),
@@ -495,10 +775,7 @@ const exercises = <String, Exercise>{
     id: 'neck-tilts',
     name: 'Neck Side Tilts',
     muscles: ['Neck'],
-    cues: [
-      'Ear toward shoulder, opposite hand gently helps',
-      '20s each side',
-    ],
+    cues: ['Ear toward shoulder, opposite hand gently helps', '20s each side'],
     mistakes: ['Pulling hard — gentle only'],
   ),
 };

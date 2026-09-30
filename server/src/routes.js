@@ -7,7 +7,16 @@ import {
   COOKIE_NAME, COOKIE_OPTS,
 } from './auth.js';
 
-const ajv = new Ajv({ allErrors: true, removeAdditional: true });
+const ajv = new Ajv({ allErrors: true });
+
+function isCalendarDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000-')) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+ajv.addFormat('calendar-date', { type: 'string', validate: isCalendarDate });
+const dateSchema = { type: 'string', format: 'calendar-date' };
+const clientIdSchema = { type: 'string', minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9._:-]+$' };
 
 const s = {
   login: ajv.compile({
@@ -20,7 +29,7 @@ const s = {
   workout: ajv.compile({
     type: 'object', required: ['date', 'exercise', 'sets'], additionalProperties: false,
     properties: {
-      date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      date: dateSchema,
       week: { type: 'integer', minimum: 1, maximum: 12 },
       day: { type: 'string', maxLength: 16 },
       exercise: { type: 'string', minLength: 1, maxLength: 64 },
@@ -31,7 +40,7 @@ const s = {
           properties: {
             setNumber: { type: 'integer', minimum: 1, maximum: 12 },
             weightKg: { type: 'number', minimum: 0, maximum: 500 },
-            reps: { type: 'integer', minimum: 0, maximum: 200 },
+            reps: { type: 'integer', minimum: 1, maximum: 200 },
           },
         },
       },
@@ -41,14 +50,14 @@ const s = {
   weight: ajv.compile({
     type: 'object', required: ['date', 'kg'], additionalProperties: false,
     properties: {
-      date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      date: dateSchema,
       kg: { type: 'number', minimum: 20, maximum: 400 },
     },
   }),
   measurements: ajv.compile({
     type: 'object', required: ['date'], additionalProperties: false,
     properties: {
-      date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      date: dateSchema,
       waistCm: { type: 'number', minimum: 30, maximum: 300 },
       chestCm: { type: 'number', minimum: 30, maximum: 300 },
       armCm: { type: 'number', minimum: 10, maximum: 100 },
@@ -57,7 +66,9 @@ const s = {
   kegels: ajv.compile({
     type: 'object', required: ['date', 'sets', 'holdSeconds'], additionalProperties: false,
     properties: {
-      date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      clientId: clientIdSchema,
+      idempotencyKey: clientIdSchema,
+      date: dateSchema,
       sets: { type: 'integer', minimum: 1, maximum: 20 },
       holdSeconds: { type: 'integer', minimum: 1, maximum: 60 },
     },
@@ -79,13 +90,13 @@ const s = {
   deleteWorkout: ajv.compile({
     type: 'object', required: ['date'], additionalProperties: false,
     properties: {
-      date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      date: dateSchema,
       exercise: { type: 'string', minLength: 1, maxLength: 64 },
     },
   }),
   deleteDate: ajv.compile({
     type: 'object', required: ['date'], additionalProperties: false,
-    properties: { date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } },
+    properties: { date: dateSchema },
   }),
   deleteId: ajv.compile({
     type: 'object', required: ['id'], additionalProperties: false,
@@ -102,7 +113,7 @@ const s = {
   checkin: ajv.compile({
     type: 'object', required: ['date'], additionalProperties: false,
     properties: {
-      date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      date: dateSchema,
       energy: { type: 'integer', minimum: 1, maximum: 5 },
       sleepHours: { type: 'number', minimum: 0, maximum: 16 },
       waterL: { type: 'number', minimum: 0, maximum: 10 },
@@ -122,6 +133,8 @@ function requireAuth(req, reply) {
 }
 
 const aiHits = {};
+const timeSettingKeys = new Set(['reminder_time', 'gym_time', 'wake_time']);
+const clockTime = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export default function routes(app) {
   app.post('/api/auth/login', async (req, reply) => {
@@ -184,6 +197,9 @@ export default function routes(app) {
     if (!session) return;
     if (!s.workout(req.body)) return reply.code(400).send({ error: 'invalid request', details: s.workout.errors });
     const { date, week, day, exercise, sets, notes } = req.body;
+    if (new Set(sets.map((set) => set.setNumber)).size !== sets.length) {
+      return reply.code(400).send({ error: 'set numbers must be unique' });
+    }
     const stmt = db.prepare(
       `INSERT INTO workout_logs (user_id, date, week, day, exercise, set_number, weight_kg, reps, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -191,6 +207,10 @@ export default function routes(app) {
        DO UPDATE SET weight_kg = excluded.weight_kg, reps = excluded.reps, week = excluded.week,
                      day = excluded.day, notes = excluded.notes`);
     const tx = db.transaction(() => {
+      // A save replaces this entire entry, including sets omitted by the client.
+      // Keep removal and insertion in one transaction so failures restore the old entry.
+      db.prepare('DELETE FROM workout_logs WHERE user_id = ? AND date = ? AND exercise = ?')
+        .run(session.user_id, date, exercise);
       for (const set of sets) {
         stmt.run(session.user_id, date, week ?? null, day ?? null, exercise,
           set.setNumber, set.weightKg, set.reps, notes ?? null);
@@ -228,10 +248,37 @@ export default function routes(app) {
     const session = requireAuth(req, reply);
     if (!session) return;
     if (!s.kegels(req.body)) return reply.code(400).send({ error: 'invalid request' });
-    db.prepare(
-      'INSERT INTO kegel_logs (user_id, date, sets, hold_seconds) VALUES (?, ?, ?, ?)'
-    ).run(session.user_id, req.body.date, req.body.sets, req.body.holdSeconds);
-    return { ok: true };
+    const keys = [req.body.clientId, req.body.idempotencyKey, req.headers['idempotency-key']]
+      .filter((key) => key !== undefined);
+    if (keys.some((key) => typeof key !== 'string' || !/^[A-Za-z0-9._:-]{1,128}$/.test(key)) ||
+        new Set(keys).size > 1) {
+      return reply.code(400).send({ error: 'invalid or conflicting idempotency key' });
+    }
+    const clientId = keys[0] ?? null;
+    const { date, sets, holdSeconds } = req.body;
+    const payload = JSON.stringify({ date, sets, holdSeconds });
+    const result = db.transaction(() => {
+      if (clientId) {
+        const previous = db.prepare('SELECT payload, kegel_id FROM kegel_requests WHERE user_id = ? AND client_id = ?')
+          .get(session.user_id, clientId);
+        if (previous) {
+          if (previous.payload !== payload) return { error: 'idempotency key already used for a different session' };
+          if (previous.kegel_id === null) return { error: 'session for this idempotency key was deleted' };
+          return { id: previous.kegel_id };
+        }
+      }
+      const created = db.prepare(
+        'INSERT INTO kegel_logs (user_id, date, sets, hold_seconds) VALUES (?, ?, ?, ?)'
+      ).run(session.user_id, date, sets, holdSeconds);
+      const id = Number(created.lastInsertRowid);
+      if (clientId) {
+        db.prepare('INSERT INTO kegel_requests (user_id, client_id, payload, kegel_id) VALUES (?, ?, ?, ?)')
+          .run(session.user_id, clientId, payload, id);
+      }
+      return { id };
+    }).immediate();
+    if (result.error) return reply.code(409).send(result);
+    return { ok: true, id: result.id, ...(clientId ? { clientId } : {}) };
   });
 
   app.get('/api/state', async (req, reply) => {
@@ -264,10 +311,12 @@ export default function routes(app) {
         'SELECT date, waist_cm AS waistCm, chest_cm AS chestCm, arm_cm AS armCm FROM measurements WHERE user_id = ? ORDER BY date'
       ).all(uid),
       kegels: db.prepare(
-        'SELECT id, date, sets, hold_seconds AS holdSeconds, created_at AS createdAt FROM kegel_logs WHERE user_id = ? ORDER BY date DESC, id DESC LIMIT 90'
+        'SELECT k.id, k.date, k.sets, k.hold_seconds AS holdSeconds, k.created_at AS createdAt, r.client_id AS clientId ' +
+        'FROM kegel_logs k LEFT JOIN kegel_requests r ON r.kegel_id = k.id ' +
+        'WHERE k.user_id = ? ORDER BY k.date DESC, k.id DESC'
       ).all(uid),
       checkins: db.prepare(
-        'SELECT date, energy, sleep_hours AS sleepHours, water_l AS waterL, mood, notes FROM checkins WHERE user_id = ? ORDER BY date DESC LIMIT 60'
+        'SELECT date, energy, sleep_hours AS sleepHours, water_l AS waterL, mood, notes FROM checkins WHERE user_id = ? ORDER BY date DESC'
       ).all(uid),
     };
   });
@@ -276,6 +325,19 @@ export default function routes(app) {
     const session = requireAuth(req, reply);
     if (!session) return;
     if (!s.settings(req.body)) return reply.code(400).send({ error: 'invalid request' });
+    const { key, value } = req.body;
+    if (timeSettingKeys.has(key) && !clockTime.test(value)) {
+      return reply.code(400).send({ error: 'time must use HH:MM' });
+    }
+    if (key === 'program_start_date' && !isCalendarDate(value)) {
+      return reply.code(400).send({ error: 'program start date must be a real date in YYYY-MM-DD format' });
+    }
+    if (key === 'reminder_enabled' && !['0', '1'].includes(value)) {
+      return reply.code(400).send({ error: 'reminder_enabled must be 0 or 1' });
+    }
+    if (key === 'units' && !['kg', 'lb'].includes(value)) {
+      return reply.code(400).send({ error: 'units must be kg or lb' });
+    }
     db.prepare(
       `INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)
        ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value`

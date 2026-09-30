@@ -1,17 +1,31 @@
-# ironforge
+# IronForge Flutter client
 
-A new Flutter project.
+IronForge is a beginner-first gym companion for Android and web. It shows a
+three-day full-body strength plan, optional easy movement, equipment/form
+instructions, exercise alternatives, set logging, progress and reminders.
 
-## Getting Started
+## Run locally
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+For the web outlet, the supported deployment topology is the Flutter web build
+served by the Fastify server in `../server`; web reminders are not native push
+alarms. Android reminders require notification permission and optionally
+Alarms & reminders access for a more precise 06:30 notification. Android may
+still delay or silence notifications due to battery settings or Do Not Disturb.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Checks
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter analyze
+flutter test
+flutter build web --release
+flutter build apk --debug
+```
+
+The release APK must be configured with a real signing keystore before public
+distribution. Do not deploy or push a build without reviewing the repository
+diff and the audit in `../renovation.md`.

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../data/program.dart';
 import '../main.dart';
+import '../services/api.dart';
 import '../theme.dart';
 
 class CoachScreen extends ConsumerStatefulWidget {
@@ -79,10 +81,14 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final day = programDays[wd - 1];
     if (day.restDay) return 'Today is REST day (gym closed Sunday)';
     final month = monthForWeek(week);
-    final buf = StringBuffer('${day.title} — week $week (${phaseForWeek(week).name}). '
-        'Exercises: ');
+    final buf = StringBuffer(
+      '${day.title} — week $week (${phaseForWeek(week).name}). '
+      'Exercises: ',
+    );
     for (final pe in day.items) {
-      buf.write('${pe.name} ${pe.setsByMonth[month]}x${pe.repsByMonth[month]}${pe.unit ?? ''}; ');
+      buf.write(
+        '${pe.name} ${pe.setsByMonth[month]}x${pe.repsByMonth[month]}${pe.unit ?? ''}; ',
+      );
     }
     return buf.toString();
   }
@@ -105,9 +111,20 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
         _busy = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      final message = switch (e) {
+        ApiException(status: 503) => 'IronCoach is not configured on this server. Workout and form guides still work without AI.',
+        ApiException(status: 429) =>
+          'IronCoach is busy. Try again in a minute.',
+        ApiException(status: 400) => e.message,
+        ApiException(status: 401) =>
+          'Session expired. Log in again to use IronCoach.',
+        ApiException() => 'IronCoach could not answer: ${e.message}',
+        _ => 'Coach could not connect. Try again when you are online.',
+      };
       setState(() {
         _busy = false;
-        _error = '$e';
+        _error = message;
       });
     }
     _scrollDown();
@@ -116,8 +133,11 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
-        _scroll.animateTo(_scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
       }
     });
   }
@@ -152,18 +172,24 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                       return const Padding(
                         padding: EdgeInsets.all(12),
                         child: Center(
-                            child: SizedBox(
-                                height: 18, width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2))),
+                          child: SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
                       );
                     }
                     final m = _msgs[i];
                     final mine = m.role == 'user';
                     return Align(
-                      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: mine
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.82),
+                          maxWidth: MediaQuery.of(context).size.width * 0.82,
+                        ),
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -175,11 +201,14 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                             bottomRight: Radius.circular(mine ? 2 : 14),
                           ),
                         ),
-                        child: Text(m.content,
-                            style: TextStyle(
-                                fontSize: 13.5,
-                                height: 1.45,
-                                color: mine ? Colors.white : T.text)),
+                        child: Text(
+                          m.content,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            height: 1.45,
+                            color: mine ? T.bg : T.text,
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -188,26 +217,32 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
         if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(_error!,
-                maxLines: 3, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: T.red, fontSize: 11.5)),
+            child: Text(
+              _error!,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: T.red, fontSize: 11.5),
+            ),
           ),
         if (showSuggestions && _model == null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
-                'IronCoach reads your server data: workouts, weight, kegels, check-ins, '
-                'missed days and your current program week — answers are grounded in it.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: T.dim, fontSize: 11)),
+              'IronCoach reads your server data: workouts, weight, kegels, check-ins, '
+              'missed days and your current program week — answers are grounded in it.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: T.dim, fontSize: 11),
+            ),
           ),
         if (_model != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Align(
               alignment: Alignment.centerRight,
-              child: Text('via $_model',
-                  style: TextStyle(color: T.dim, fontSize: 10)),
+              child: Text(
+                'via $_model',
+                style: TextStyle(color: T.dim, fontSize: 10),
+              ),
             ),
           ),
         SafeArea(
@@ -230,13 +265,16 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                     decoration: InputDecoration(
                       hintText: 'Ask IronCoach… (reads your real data)',
                       isDense: true,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
+                  tooltip: 'Send to IronCoach',
                   style: IconButton.styleFrom(backgroundColor: T.indigo),
                   onPressed: _busy
                       ? null
@@ -275,21 +313,33 @@ class _Welcome extends StatelessWidget {
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('IronCoach 🤖',
-                  style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
+              Text(
+                'IronCoach 🤖',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
               SizedBox(height: 6),
               Text(
-                  'Your personal AI trainer. It reads YOUR live data from the server — '
-                  'workouts, weights, measurements, kegels, check-ins, missed days — plus '
-                  'your 12-week program — and coaches you like a human trainer would.',
-                  style: TextStyle(fontSize: 13, height: 1.5, color: Colors.white)),
+                'Your personal AI trainer. It reads YOUR live data from the server — '
+                'workouts, weights, measurements, kegels, check-ins, missed days — plus '
+                'your 12-week program — and coaches you like a human trainer would.',
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        const Text('Try asking',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+        const Text(
+          'Try asking',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+        ),
         const SizedBox(height: 8),
         for (final s in suggestions)
           Padding(
@@ -299,7 +349,10 @@ class _Welcome extends StatelessWidget {
                 foregroundColor: T.text,
                 side: const BorderSide(color: T.border),
                 alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
               ),
               onPressed: () => onAsk(s),
               child: Text(s, style: const TextStyle(fontSize: 13)),

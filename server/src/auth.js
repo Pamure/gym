@@ -2,7 +2,10 @@ import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import db from './db.js';
 
-const SESSION_HOURS = 12;
+// A private single-user app should not unexpectedly log out during a normal
+// training block. Keep the HttpOnly cookie, but use a 30-day bounded session;
+// explicit logout and password changes still invalidate it immediately.
+const SESSION_HOURS = 24 * 30;
 const RATE_WINDOW_MS = 60 * 1000;       // 1 min
 const RATE_MAX = 5;                      // 5 attempts/min
 const LOCK_THRESHOLD = 10;               // attempts in window
